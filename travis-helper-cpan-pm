@@ -1,0 +1,93 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Cwd qw(getcwd);
+use File::Path qw(mkpath);
+use FindBin;
+use Getopt::Long;
+
+my $home_dir = $ENV{HOME};
+my $sysdeps_clone_url = 'https://github.com/eserte/cpan-plugin-sysdeps';
+
+GetOptions
+    (
+     'home-dir=s'     =>    \$home_dir,
+     'dry-run'        => \my $dry_run,
+     'distroprefs=s'  => \my $distro_prefs_clone_url,
+     'enable-sysdeps' => \my $enable_sysdeps,
+    ) or die "usage!";
+
+sub create_dir ($) {
+    my $dir = shift;
+    if (!-d $dir) {
+	print STDERR "Create $dir... ";
+	mkpath $dir if !$dry_run;
+	print STDERR "done.\n";
+    }
+}
+
+sub git_clone ($$) {
+    my($clone_url, $clone_dest) = @_;
+    print STDERR "git-clone $clone_url... \n";
+    if (!$dry_run) {
+	system 'git', 'clone', $clone_url, $clone_dest;
+	die "Cloning $clone_url to $clone_dest failed" if $? != 0;
+    }
+    print STDERR "done.\n";
+}
+
+my $CPAN_dir = "$home_dir/.cpan/CPAN";
+create_dir $CPAN_dir;
+
+my $MyConfig_file = "$CPAN_dir/MyConfig.pm";
+if (!-e $MyConfig_file) {
+    print STDERR "Create $MyConfig_file... ";
+    open my $fh, '<', "$FindBin::RealBin/.cpan/CPAN/MyConfig.pm.tpl"
+	or die "Can't read MyConfig.pm.tpl: $!";
+    my $ofh;
+    if ($dry_run) {
+	open $ofh, '>&', \*STDERR
+	    or die $!;
+    } else {
+	open $ofh, '>', $MyConfig_file
+	    or die "Can't write to $MyConfig_file: $!";
+    }
+    while(<$fh>) {
+	s{\@HOME\@}{$home_dir}g;
+	print $ofh $_;
+    }
+    close $ofh
+	or die "Error while closing: $!";
+    print STDERR "done.\n";
+}
+
+if ($distro_prefs_clone_url) {
+    git_clone $distro_prefs_clone_url, "$home_dir/.cpan/prefs";
+}
+
+if ($enable_sysdeps) {
+    create_dir "$home_dir/src";
+    git_clone $sysdeps_clone_url, "$home_dir/src/cpan-plugin-sysdeps";
+    my $cwd = getcwd;
+    chdir "$home_dir/src/cpan-plugin-sysdeps"
+	or die "Can't chdir to $home_dir/src/cpan-plugin-sysdeps: $!";
+    print STDERR "Install cpan-plugin-sysdeps... ";
+    if (!$dry_run) {
+	system $^X, 'Makefile.PL';
+	die "Makefile.PL failed" if $? != 0;
+	system 'make', 'all', 'test';
+	die "build/test failed" if $? != 0;
+	system 'sudo', 'make', 'install';
+	die "install failed" if $? != 0;
+    }
+    print STDERR "done.\n";
+    chdir $cwd
+	or die $!;
+}
+
+print STDERR "Install YAML::Syck... ";
+if (!$dry_run) {
+    system 'cpan', 'YAML::Syck'; # XXX Expect? other mods?
+}
+print STDERR "done.\n";
