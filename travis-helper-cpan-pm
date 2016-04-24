@@ -37,6 +37,17 @@ sub git_clone ($$) {
     print STDERR "done.\n";
 }
 
+sub cpan_mod_install (@) {
+    my(@cpan_mods) = @_;
+    if (@cpan_mods) {
+	print STDERR "Install @cpan_mods... ";
+	if (!$dry_run) {
+	    system 'cpan', @cpan_mods;
+	}
+    }
+    print STDERR "done.\n";
+}
+
 my $CPAN_dir = "$home_dir/.cpan/CPAN";
 create_dir $CPAN_dir;
 
@@ -84,10 +95,12 @@ if ($enable_sysdeps) {
     print STDERR "done.\n";
     chdir $cwd
 	or die $!;
+
+    # CPAN.pm 2.07 is the first one with plugin support
+    if (!eval { require CPAN; CPAN->VERSION("2.07") }) {
+	print STDERR "Need to upgrade CPAN.pm...\n"; 
+	cpan_mod_install 'CPAN';
+    }
 }
 
-print STDERR "Install YAML::Syck... ";
-if (!$dry_run) {
-    system 'cpan', 'YAML::Syck'; # XXX Expect? other mods?
-}
-print STDERR "done.\n";
+cpan_mod_install 'YAML::Syck'; # XXX Expect? other mods?
