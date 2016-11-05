@@ -21,6 +21,7 @@ $CPAN::Config = {
   'mbuildpl_arg' => q[],
   'no_proxy' => q[],
   'urllist' => [q[http://cpan.cpantesters.org/], q[http://cpan.develooper.com/], q[ftp://ftp.funet.fi/pub/CPAN]],
+  'patch' => q[/usr/bin/patch],
   'plugin_list' => [q[CPAN::Plugin::Sysdeps=batch]],
   'prefs_dir' => q[@HOME@/.cpan/prefs],
   'prerequisites_policy' => q[follow],
