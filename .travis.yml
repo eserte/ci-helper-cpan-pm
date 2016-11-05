@@ -1,0 +1,41 @@
+sudo: true
+
+language: perl
+matrix:
+  include:
+    - perl: "5.20"
+    - perl: "5.24"
+    - perl: "5.24"
+      dist: trusty
+## XXX does not work yet; probably need to configure local::lib
+#    - perl: "5.18"
+#      os: osx
+    - perl: "5.18"
+    - perl: "5.14"
+    - perl: "5.10"
+    - perl: "5.20-shrplib"
+## XXX does not work yet: 5.8 may be 5.8.8, which has a very old CPAN.pm
+#    - perl: "5.8"
+
+before_install:
+  - ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps
+
+install:
+  - cpan Curses DB_File GD Imager Linux::Inotify2 Pango Prima Tk WWW::Curl XML::LibXML
+# https://rt.cpan.org/Ticket/Display.html?id=103157
+  - if [ "$TRAVIS_OS_NAME" != "osx" ]; then cpan File::LibMagic; fi
+
+script:
+  - perl -MCurses -e1
+  - perl -MDB_File -e1
+  - if [ "$TRAVIS_OS_NAME" != "osx" ]; then perl -MFile::LibMagic -e1; fi
+  - perl -MGD -e1
+  - perl -MImager -e1
+  - perl -MLinux::Inotify2 -e1
+  - perl -MPango -e1
+## XXX fails without DISPLAY
+#  - perl -MPrima -e1
+  - perl -MTk -e1
+  - perl -MWWW::Curl -e1
+  - perl -MXML::LibXML -e1
+
