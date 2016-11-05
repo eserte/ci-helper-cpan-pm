@@ -31,7 +31,7 @@ sub git_clone ($$) {
     my($clone_url, $clone_dest) = @_;
     print STDERR "git-clone $clone_url... \n";
     if (!$dry_run) {
-	system 'git', 'clone', $clone_url, $clone_dest;
+	system 'git', 'clone', '--quiet', $clone_url, $clone_dest;
 	die "Cloning $clone_url to $clone_dest failed" if $? != 0;
     }
     print STDERR "done.\n";
