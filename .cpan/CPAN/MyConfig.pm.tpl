@@ -2,6 +2,7 @@ $CPAN::Config = {
   'auto_commit' => q[0],
   'build_cache' => q[100],
   'build_dir' => q[@HOME@/.cpan/build],
+  'build_requires_install_policy' => q[yes],
   'cache_metadata' => q[1],
   'colorize_output' => q[1],
   'colorize_print' => q[blue],
