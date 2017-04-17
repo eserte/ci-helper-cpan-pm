@@ -9,6 +9,13 @@ use Getopt::Long;
 
 my $home_dir = $ENV{HOME};
 my $sysdeps_clone_url = 'https://github.com/eserte/cpan-plugin-sysdeps';
+my $with_sudo = 1;
+
+sub usage () {
+    die <<EOF;
+usage: $0 [--no-sudo] [--home-dir=directory] [--dry-run] [--distroprefs=git-clone-url] [--enable-sysdeps]
+EOF
+}
 
 GetOptions
     (
@@ -16,7 +23,8 @@ GetOptions
      'dry-run'        => \my $dry_run,
      'distroprefs=s'  => \my $distro_prefs_clone_url,
      'enable-sysdeps' => \my $enable_sysdeps,
-    ) or die "usage!";
+     'sudo!'          =>    \$with_sudo,
+    ) or usage;
 
 sub create_dir ($) {
     my $dir = shift;
@@ -89,8 +97,14 @@ if ($enable_sysdeps) {
 	die "Makefile.PL failed" if $? != 0;
 	system 'make', 'all', 'test';
 	die "build/test failed" if $? != 0;
-	system 'sudo', 'make', 'install';
-	die "install failed" if $? != 0;
+	{
+	    my @cmd = qw(make install);
+	    if ($with_sudo) {
+		unshift @cmd, 'sudo';
+	    }
+	    system @cmd;
+	    die "'@cmd' failed" if $? != 0;
+	}
     }
     print STDERR "done.\n";
     chdir $cwd

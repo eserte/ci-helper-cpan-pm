@@ -26,6 +26,7 @@ install:
   - if [ "$TRAVIS_OS_NAME" != "osx" ]; then cpan File::LibMagic; fi
 
 script:
+  - perl -c travis-helper-cpan-pm
   - perl -MCurses -e1
   - perl -MDB_File -e1
   - if [ "$TRAVIS_OS_NAME" != "osx" ]; then perl -MFile::LibMagic -e1; fi
