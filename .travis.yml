@@ -4,6 +4,7 @@ language: perl
 matrix:
   include:
     - perl: "5.20"
+    - perl: "5.8"
     - perl: "5.24"
     - perl: "5.24"
       dist: trusty
@@ -14,8 +15,6 @@ matrix:
     - perl: "5.14"
     - perl: "5.10"
     - perl: "5.20-shrplib"
-## XXX does not work yet: 5.8 may be 5.8.8, which has a very old CPAN.pm
-#    - perl: "5.8"
 
 before_install:
   - ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps
