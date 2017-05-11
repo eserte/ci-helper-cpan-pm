@@ -5,6 +5,7 @@ use warnings;
 use Cwd qw(getcwd);
 use File::Path qw(mkpath);
 use FindBin;
+use ExtUtils::MakeMaker ();
 use Getopt::Long;
 
 my $home_dir = $ENV{HOME};
@@ -56,6 +57,12 @@ sub cpan_mod_install (@) {
     print STDERR "done.\n";
 }
 
+my $cpan_pm_version = do {
+    my $cpan_pm_path = module_path("CPAN");
+    die "Unexpected: cannot find path to CPAN.pm" if !$cpan_pm_path;
+    MM->parse_version($cpan_pm_path);
+};
+
 my $CPAN_dir = "$home_dir/.cpan/CPAN";
 create_dir $CPAN_dir;
 
@@ -73,6 +80,17 @@ if (!-e $MyConfig_file) {
 	    or die "Can't write to $MyConfig_file: $!";
     }
     while(<$fh>) {
+	s{^#\@CPANVER(.*?)\@(.*)}{
+	    if (eval qq{$cpan_pm_version $1}) {
+		$2;
+	    } else {
+		if ($@) {
+		    die "Problem in line $_: $@";
+		} else {
+		    "";
+		}
+	    }
+	}ge;
 	s{\@HOME\@}{$home_dir}g;
 	print $ofh $_;
     }
@@ -118,3 +136,22 @@ if ($enable_sysdeps) {
 }
 
 cpan_mod_install 'YAML::Syck'; # XXX Expect? other mods?
+
+# REPO BEGIN
+# REPO NAME module_path /Users/eserte/src/srezic-repository 
+# REPO MD5 ac5f3ce48a524d09d92085d12ae26e8c
+
+sub module_path {
+    my($filename) = @_;
+    $filename =~ s{::}{/}g;
+    $filename .= ".pm";
+    foreach my $prefix (@INC) {
+	my $realfilename = "$prefix/$filename";
+	if (-r $realfilename) {
+	    return $realfilename;
+	}
+    }
+    return undef;
+}
+# REPO END
+
