@@ -20,9 +20,10 @@ before_install:
   - ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps
 
 install:
-  - cpan Curses DB_File GD Imager Linux::Inotify2 Pango Prima Tk WWW::Curl XML::LibXML
+  - cpan Curses DB_File GD Imager Linux::Inotify2 Pango Tk WWW::Curl XML::LibXML
 # https://rt.cpan.org/Ticket/Display.html?id=103157
   - if [ "$TRAVIS_OS_NAME" != "osx" ]; then cpan File::LibMagic; fi
+  - if [[ "$TRAVIS_PERL_VERSION" != "5.8" ]] ; then cpan Prima; fi
 
 script:
   - perl -c travis-helper-cpan-pm
