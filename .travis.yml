@@ -1,13 +1,14 @@
 sudo: true
 
+dist: trusty
 language: perl
 matrix:
   include:
     - perl: "5.20"
     - perl: "5.8"
     - perl: "5.24"
-    - perl: "5.24"
-      dist: trusty
+    - perl: "5.14"
+      dist: precise
 ## XXX does not work yet; probably need to configure local::lib
 #    - perl: "5.18"
 #      os: osx
