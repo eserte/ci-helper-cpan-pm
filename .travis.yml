@@ -13,12 +13,14 @@ matrix:
 #    - perl: "5.18"
 #      os: osx
     - perl: "5.18"
+      env:
+        - EXTRA_TRAVIS_HELPER_CPAN_PM_OPTS="-mirrorurl https://cpan.metacpan.org/ -mirrorurl http://cpan.cpantesters.org/"
     - perl: "5.14"
     - perl: "5.10"
     - perl: "5.20-shrplib"
 
 before_install:
-  - ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps
+  - ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps $EXTRA_TRAVIS_HELPER_CPAN_PM_OPTS
 
 install:
   - cpan Curses DB_File GD Imager Linux::Inotify2 Pango Tk WWW::Curl XML::LibXML
