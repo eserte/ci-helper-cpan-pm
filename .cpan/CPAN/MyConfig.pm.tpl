@@ -24,7 +24,7 @@ $CPAN::Config = {
   'mbuild_install_build_command' => q[sudo ./Build],
   'mbuildpl_arg' => q[],
   'no_proxy' => q[],
-  'urllist' => [q[http://cpan.cpantesters.org/], q[http://cpan.develooper.com/], q[ftp://ftp.funet.fi/pub/CPAN]],
+  'urllist' => [@URLLIST@],
 #@CPANVER<2.00@  'pager' => q[/usr/bin/less],
   'patch' => q[/usr/bin/patch],
   'plugin_list' => [q[CPAN::Plugin::Sysdeps=batch]],

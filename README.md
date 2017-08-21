@@ -22,6 +22,7 @@ there should be no intermediate directory to the .yml files
 * --enable-sysdeps: enable automatic installation of system packages
 * --dry-run: just show the steps, don't execute anything
 * --no-sudo: don't use sudo when installing
+* --mirrorurl=url: use another CPAN mirror URL. May be specified multiple times.
 
 ## Limitations
 CPAN::Plugin::Sysdeps has a static mapping of CPAN modules to system packages.
