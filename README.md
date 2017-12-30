@@ -28,3 +28,9 @@ there should be no intermediate directory to the .yml files
 CPAN::Plugin::Sysdeps has a static mapping of CPAN modules to system packages.
 This mapping is maintained manually and currently has only limited support for
 the Ubuntu distributions used at travis-ci.
+
+## Other uses
+This helper script may also work elsewhere, for example on appveyor using cygwin's perl:
+```
+  - if %perl%==cygwinperl c:\cygwin\bin\sh -c "PATH=/usr/bin:/bin; (cd /tmp && git clone https://github.com/eserte/travis-helper-cpan-pm.git && ./travis-helper-cpan-pm/travis-helper-cpan-pm --no-sudo && cpan Foo::Bar ...)"
+```
