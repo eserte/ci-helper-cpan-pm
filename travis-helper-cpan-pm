@@ -16,7 +16,7 @@ my @default_urllist = qw(http://cpan.metacpan.org/ http://cpan.cpantesters.org/ 
 
 sub usage () {
     die <<EOF;
-usage: $0 [--no-sudo] [--home-dir=directory] [--dry-run] [--distroprefs=git-clone-url] [--enable-sysdeps] [--mirrorurl=url ...]
+usage: $0 [--no-sudo] [--home-dir=directory] [--dry-run] [--distroprefs=git-clone-url] [--enable-sysdeps] [--mirrorurl=url ...] [--debug]
 EOF
 }
 
@@ -28,6 +28,7 @@ GetOptions
      'enable-sysdeps' => \my $enable_sysdeps,
      'sudo!'          =>    \$with_sudo,
      'mirrorurl=s@'   =>    \@urllist,
+     'debug!'         => \my $debug,
     ) or usage;
 
 sub create_dir ($) {
@@ -116,6 +117,14 @@ if (!-e $MyConfig_file) {
     close $ofh
 	or die "Error while closing: $!";
     print STDERR "done.\n";
+
+    if ($debug) {
+	open my $fh, '<', $MyConfig_file
+	    or die "Unexpected error: can't open $MyConfig_file: $!";
+	warn "Contents of $MyConfig_file:\n";
+	local $/;
+	warn scalar <$fh>;
+    }
 }
 
 if ($distro_prefs_clone_url) {
