@@ -65,6 +65,12 @@ if (!@urllist) {
 }
 my $urllist_formatted = join(", ", map { "q[$_]" } @urllist);
 
+my @plugin_list;
+if ($enable_sysdeps) {
+    push @plugin_list, q[CPAN::Plugin::Sysdeps=batch];
+}
+my $plugin_list_formatted = join(", ", map { "q[$_]" } @plugin_list);
+
 my $cpan_pm_version = do {
     my $cpan_pm_path = module_path("CPAN");
     die "Unexpected: cannot find path to CPAN.pm" if !$cpan_pm_path;
@@ -101,6 +107,7 @@ if (!-e $MyConfig_file) {
 	}ge;
 	s{\@HOME\@}{$home_dir}g;
 	s{\@URLLIST\@}{$urllist_formatted}g;
+	s{\@PLUGIN_LIST\@}{$plugin_list_formatted}g;
 	print $ofh $_;
     }
     close $ofh

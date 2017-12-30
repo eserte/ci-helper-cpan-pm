@@ -27,7 +27,7 @@ $CPAN::Config = {
   'urllist' => [@URLLIST@],
 #@CPANVER<2.00@  'pager' => q[/usr/bin/less],
   'patch' => q[/usr/bin/patch],
-  'plugin_list' => [q[CPAN::Plugin::Sysdeps=batch]],
+  'plugin_list' => [@PLUGIN_LIST@],
   'prefs_dir' => q[@HOME@/.cpan/prefs],
   'prerequisites_policy' => q[follow],
   'scan_cache' => q[never],
