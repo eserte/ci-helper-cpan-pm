@@ -71,6 +71,8 @@ if ($enable_sysdeps) {
 }
 my $plugin_list_formatted = join(", ", map { "q[$_]" } @plugin_list);
 
+my $sudo_formatted = $with_sudo ? 'sudo ' : '';
+
 my $cpan_pm_version = do {
     my $cpan_pm_path = module_path("CPAN");
     die "Unexpected: cannot find path to CPAN.pm" if !$cpan_pm_path;
@@ -106,6 +108,7 @@ if (!-e $MyConfig_file) {
 	    }
 	}ge;
 	s{\@HOME\@}{$home_dir}g;
+	s{\@SUDO_\@}{$sudo_formatted}g;
 	s{\@URLLIST\@}{$urllist_formatted}g;
 	s{\@PLUGIN_LIST\@}{$plugin_list_formatted}g;
 	print $ofh $_;
