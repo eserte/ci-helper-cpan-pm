@@ -21,7 +21,7 @@ matrix:
 
 before_install:
   - ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps $EXTRA_TRAVIS_HELPER_CPAN_PM_OPTS
-  - apt-get update -qq
+  - sudo apt-get update -qq
 
 install:
   - cpan Curses DB_File GD Imager Linux::Inotify2 Pango Tk WWW::Curl XML::LibXML
