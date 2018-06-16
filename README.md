@@ -34,3 +34,10 @@ This helper script may also work elsewhere, for example on appveyor using cygwin
 ```
   - if %perl%==cygwinperl c:\cygwin\bin\sh -c "PATH=/usr/bin:/bin; (cd /tmp && git clone https://github.com/eserte/travis-helper-cpan-pm.git && ./travis-helper-cpan-pm/travis-helper-cpan-pm --no-sudo && cpan Foo::Bar ...)"
 ```
+
+Or within a Dockerfile:
+```
+RUN apt-get -y install git perl-modules
+RUN git clone --depth=1 https://github.com/eserte/travis-helper-cpan-pm.git /tmp/travis-helper-cpan-pm
+RUN /tmp/travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --no-sudo
+```
