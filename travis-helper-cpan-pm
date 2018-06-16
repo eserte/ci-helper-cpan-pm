@@ -16,7 +16,7 @@ my @default_urllist = qw(http://cpan.metacpan.org/ http://cpan.cpantesters.org/ 
 
 sub usage () {
     die <<EOF;
-usage: $0 [--no-sudo] [--home-dir=directory] [--dry-run] [--distroprefs=git-clone-url] [--enable-sysdeps] [--mirrorurl=url ...] [--debug]
+usage: $0 [--no-sudo] [--home-dir=directory] [--dry-run] [--distroprefs=git-clone-url] [--enable-sysdeps] [--sysdeps-branch ...] [--mirrorurl=url ...] [--debug]
 EOF
 }
 
@@ -26,6 +26,7 @@ GetOptions
      'dry-run'        => \my $dry_run,
      'distroprefs=s'  => \my $distro_prefs_clone_url,
      'enable-sysdeps' => \my $enable_sysdeps,
+     'sysdeps-branch=s'=>\my $sysdeps_branch,
      'sudo!'          =>    \$with_sudo,
      'mirrorurl=s@'   =>    \@urllist,
      'debug!'         => \my $debug,
@@ -40,11 +41,15 @@ sub create_dir ($) {
     }
 }
 
-sub git_clone ($$) {
-    my($clone_url, $clone_dest) = @_;
-    print STDERR "git-clone $clone_url... \n";
+sub git_clone ($$;@) {
+    my($clone_url, $clone_dest, %opts) = @_;
+    my $branch = delete $opts{branch};
+    die "Unhandled options: " . join(" ", %opts) if %opts;
+
+    my @cmd = ('git', 'clone', '--quiet', (defined $branch ? ('-b', $branch) : ()), $clone_url, $clone_dest);
+    print STDERR "@cmd... \n";
     if (!$dry_run) {
-	system 'git', 'clone', '--quiet', $clone_url, $clone_dest;
+	system @cmd;
 	die "Cloning $clone_url to $clone_dest failed" if $? != 0;
     }
     print STDERR "done.\n";
@@ -133,7 +138,7 @@ if ($distro_prefs_clone_url) {
 
 if ($enable_sysdeps) {
     create_dir "$home_dir/src";
-    git_clone $sysdeps_clone_url, "$home_dir/src/cpan-plugin-sysdeps";
+    git_clone $sysdeps_clone_url, "$home_dir/src/cpan-plugin-sysdeps", branch => $sysdeps_branch;
     my $cwd = getcwd;
     chdir "$home_dir/src/cpan-plugin-sysdeps"
 	or die "Can't chdir to $home_dir/src/cpan-plugin-sysdeps: $!";
