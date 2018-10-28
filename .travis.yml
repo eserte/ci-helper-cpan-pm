@@ -10,6 +10,8 @@ matrix:
     - perl: "5.14"
       dist: precise
 ## XXX does not work yet; probably need to configure local::lib
+## XXX currently fails on CPAN.pm upgrade --- writes to /usr/bin are not permitted
+## XXX so an old non-plugin capable CPAN.pm is used (version 2.00 or so)
 #    - perl: "5.18"
 #      os: osx
     - perl: "5.18"
@@ -20,13 +22,13 @@ matrix:
     - perl: "5.20-shrplib"
 
 before_install:
-  - ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps $EXTRA_TRAVIS_HELPER_CPAN_PM_OPTS
-  - sudo apt-get update -qq
+  - ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master $EXTRA_TRAVIS_HELPER_CPAN_PM_OPTS
+  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then sudo apt-get update -qq; fi
 
 install:
-  - cpan Curses DB_File GD Imager Linux::Inotify2 Pango Tk WWW::Curl XML::LibXML
-# https://rt.cpan.org/Ticket/Display.html?id=103157
-  - if [ "$TRAVIS_OS_NAME" != "osx" ]; then cpan File::LibMagic; fi
+  - cpan File::LibMagic Curses DB_File GD Imager Linux::Inotify2 Pango Tk WWW::Curl
+  # XML::LibXML tries to /System/Library/Perl/Extras/5.18/XML/SAX/ParserDetails.ini which is not allowed
+  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then cpan XML::LibXML; fi
   - if [[ "$TRAVIS_PERL_VERSION" != "5.8" ]] ; then cpan Prima; fi
 
 script:
