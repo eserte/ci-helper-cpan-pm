@@ -37,7 +37,7 @@ This helper script may also work elsewhere, for example on appveyor using cygwin
 
 Or within a Dockerfile:
 ```
-RUN apt-get -y install git perl-modules
+RUN apt-get -y install git perl-modules ca-certificates
 RUN git clone --depth=1 https://github.com/eserte/travis-helper-cpan-pm.git /tmp/travis-helper-cpan-pm
 RUN /tmp/travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --no-sudo
 ```
