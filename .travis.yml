@@ -1,14 +1,18 @@
 sudo: true
 
-dist: trusty
 language: perl
 matrix:
   include:
+    - perl: "5.30"
+      dist: xenial
     - perl: "5.26"
+      dist: xenial
     - perl: "5.8"
+      dist: trusty
     - perl: "5.24"
+      dist: xenial
     - perl: "5.14"
-      dist: precise
+      dist: trusty
 ## XXX does not work yet; probably need to configure local::lib
 ## XXX currently fails on CPAN.pm upgrade --- writes to /usr/bin are not permitted
 ## XXX so an old non-plugin capable CPAN.pm is used (version 2.00 or so)
@@ -17,9 +21,13 @@ matrix:
     - perl: "5.18"
       env:
         - EXTRA_TRAVIS_HELPER_CPAN_PM_OPTS="-mirrorurl https://cpan.metacpan.org/ -mirrorurl http://cpan.cpantesters.org/"
+      dist: trusty
     - perl: "5.14"
+      dist: trusty
     - perl: "5.10"
+      dist: trusty
     - perl: "5.20-shrplib"
+      dist: xenial
 
 before_install:
   - ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master $EXTRA_TRAVIS_HELPER_CPAN_PM_OPTS
