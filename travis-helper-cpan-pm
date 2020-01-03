@@ -13,10 +13,11 @@ my $sysdeps_clone_url = 'https://github.com/eserte/cpan-plugin-sysdeps';
 my $with_sudo = 1;
 my @urllist;
 my @default_urllist = qw(http://cpan.metacpan.org/ http://cpan.cpantesters.org/ http://cpan.develooper.com/ ftp://ftp.funet.fi/pub/CPAN);
+my $yaml_module = 'YAML::XS';
 
 sub usage () {
     die <<EOF;
-usage: $0 [--no-sudo] [--home-dir=directory] [--dry-run] [--distroprefs=git-clone-url] [--enable-sysdeps] [--sysdeps-branch ...] [--mirrorurl=url ...] [--debug]
+usage: $0 [--no-sudo] [--home-dir=directory] [--dry-run] [--distroprefs=git-clone-url] [--enable-sysdeps] [--sysdeps-branch ...] [--yaml-module ...] [--mirrorurl=url ...] [--debug]
 EOF
 }
 
@@ -30,6 +31,7 @@ GetOptions
      'sudo!'          =>    \$with_sudo,
      'mirrorurl=s@'   =>    \@urllist,
      'debug!'         => \my $debug,
+     'yaml-module=s'  =>    \$yaml_module,
     ) or usage;
 
 sub create_dir ($) {
@@ -168,7 +170,8 @@ if ($enable_sysdeps) {
     }
 }
 
-cpan_mod_install 'YAML::Syck'; # XXX Expect? other mods?
+cpan_mod_install $yaml_module;
+# XXX install also other modules? Expect?
 
 # REPO BEGIN
 # REPO NAME module_path /Users/eserte/src/srezic-repository 
