@@ -41,3 +41,14 @@ RUN apt-get -y install git perl-modules ca-certificates
 RUN git clone --depth=1 https://github.com/eserte/travis-helper-cpan-pm.git /tmp/travis-helper-cpan-pm
 RUN /tmp/travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --no-sudo
 ```
+
+Or in Github Actions (see also .github/workflows/test.yml):
+```
+    ...
+    steps:
+    - uses: actions/checkout@v1
+    - name: before_install
+      run: |
+        ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master
+    ...
+```
