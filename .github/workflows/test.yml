@@ -19,31 +19,61 @@ jobs:
     - name: before_install
       run: |
         ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master
-    - name: install
-      run: |
-        cpan File::LibMagic Curses DB_File GD Imager Linux::Inotify2 Pango Tk WWW::Curl XML::LibXML Prima
     - name: check travis-helper-cpan-pm
       run: perl -c travis-helper-cpan-pm
-    - name: check Curses
-      run: perl -MCurses -e1
-    - name: check DB_File
-      run: perl -MDB_File -e1
+
+    - name: install File::LibMagic
+      run: cpan File::LibMagic
     - name: check File::LibMagic
       run: perl -MFile::LibMagic -e1
+
+    - name: install Curses
+      run: cpan Curses
+    - name: check Curses
+      run: perl -MCurses -e1
+
+    - name: install DB_File
+      run: cpan DB_File
+    - name: check DB_File
+      run: perl -MDB_File -e1
+
+    - name: install GD
+      run: cpan GD
     - name: check GD
       run: perl -MGD -e1
+
+    - name: install Imager
+      run: cpan Imager
     - name: check Imager
       run: perl -MImager -e1
+
+    - name: install Linux::Inotify2
+      run: cpan Linux::Inotify2
     - name: check Linux::Inotify2
       run: perl -MLinux::Inotify2 -e1
+
+    - name: install Pango
+      run: cpan Pango
     - name: check Pango
       run: perl -MPango -e1
+
+    - name: install Tk
+      run: cpan Tk
+    - name: check Tk
+      run: perl -MTk -e1
+
+    - name: install WWW::Curl
+      run: cpan WWW::Curl
+    - name: check WWW::Curl
+      run: perl -MWWW::Curl -e1
+
+    - name: install XML::LibXML
+      run: cpan XML::LibXML
+    - name: check XML::LibXML
+      run: perl -MXML::LibXML -e1
+
+    - name: install Prima
+      run: cpan Prima
 ## XXX fails without DISPLAY
 #    - name: check Prima
 #      run:  perl -MPrima -e1
-    - name: check Tk
-      run: perl -MTk -e1
-    - name: check WWW::Curl
-      run: perl -MWWW::Curl -e1
-    - name: check XML::LibXML
-      run: perl -MXML::LibXML -e1
