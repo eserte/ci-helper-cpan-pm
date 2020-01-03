@@ -119,6 +119,7 @@ if (!-e $MyConfig_file) {
 	s{\@SUDO_\@}{$sudo_formatted}g;
 	s{\@URLLIST\@}{$urllist_formatted}g;
 	s{\@PLUGIN_LIST\@}{$plugin_list_formatted}g;
+	s{\@YAML_MODULE\@}{$yaml_module}g;
 	print $ofh $_;
     }
     close $ofh
