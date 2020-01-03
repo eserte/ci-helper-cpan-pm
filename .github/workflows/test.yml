@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches-ignore:
+      - '*travis*'
+      - '*appveyor*'
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+     matrix:
+       os: [ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: before_install
+      run: |
+        ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master
+    - name: install
+      run: |
+        cpan File::LibMagic Curses DB_File GD Imager Linux::Inotify2 Pango Tk WWW::Curl XML::LibXML Prima
+    - name: check travis-helper-cpan-pm
+      run: perl -c travis-helper-cpan-pm
+    - name: check Curses
+      run: perl -MCurses -e1
+    - name: check DB_File
+      run: perl -MDB_File -e1
+    - name: check File::LibMagic
+      run: perl -MFile::LibMagic -e1
+    - name: check GD
+      run: perl -MGD -e1
+    - name: check Imager
+      run: perl -MImager -e1
+    - name: check Linux::Inotify2
+      run: perl -MLinux::Inotify2 -e1
+    - name: check Pango
+      run: perl -MPango -e1
+## XXX fails without DISPLAY
+#    - name: check Prima
+#      run:  perl -MPrima -e1
+    - name: check Tk
+      run: perl -MTk -e1
+    - name: check WWW::Curl
+      run: perl -MWWW::Curl -e1
+    - name: check XML::LibXML
+      run: perl -MXML::LibXML -e1

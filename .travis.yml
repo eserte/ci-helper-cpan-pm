@@ -54,3 +54,7 @@ script:
   - perl -MWWW::Curl -e1
   - perl -MXML::LibXML -e1
 
+branches:
+  except:
+    - /appveyor/
+    - /github-actions/
