@@ -5,6 +5,8 @@ on:
     branches-ignore:
       - '*travis*'
       - '*appveyor*'
+  schedule:
+    - cron:  '0 20 * * 5'
 
 jobs:
   test:
