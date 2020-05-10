@@ -18,11 +18,26 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+
+    - name: apt hacks
+      # the already installed libgd3 conflicts with libgd-dev to be installed
+      # also, /etc/apt/sources.list should be sufficient; all the other repositories are possibly problematic
+      run: |
+        sudo apt-get remove -y libgd3
+        sudo rm -f /etc/apt/sources.list.d/*.list
+        sudo apt-get update -qq
+      if: "startsWith(matrix.os, 'ubuntu-')"
+
     - name: before_install
       run: |
         ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master
     - name: check travis-helper-cpan-pm
       run: perl -c travis-helper-cpan-pm
+
+    - name: install GD
+      run: cpan GD
+    - name: check GD
+      run: perl -MGD -e1
 
     - name: install File::LibMagic
       run: cpan File::LibMagic
@@ -38,11 +53,6 @@ jobs:
       run: cpan DB_File
     - name: check DB_File
       run: perl -MDB_File -e1
-
-    - name: install GD
-      run: cpan GD
-    - name: check GD
-      run: perl -MGD -e1
 
     - name: install Imager
       run: cpan Imager
