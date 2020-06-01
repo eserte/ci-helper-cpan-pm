@@ -4,7 +4,7 @@ language: perl
 matrix:
   include:
     - perl: "5.30"
-      dist: xenial
+      dist: bionic
     - perl: "5.26"
       dist: xenial
     - perl: "5.8"
