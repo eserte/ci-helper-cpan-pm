@@ -28,9 +28,9 @@ matrix:
       dist: trusty
     - perl: "5.20-shrplib"
       dist: xenial
-  allow_failures:
-## XXX Prima 1.59 does not compile: https://rt.cpan.org/Ticket/Display.html?id=132752
-    - dist: trusty
+#  allow_failures:
+### XXX Prima 1.59 does not compile: https://rt.cpan.org/Ticket/Display.html?id=132752
+#    - dist: trusty
 
 before_install:
   - ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master $EXTRA_TRAVIS_HELPER_CPAN_PM_OPTS
