@@ -9,7 +9,7 @@ Use the plugin like this in your `.travis.yml`:
 
 ```
 before_install:
-  - git clone https://github.com/eserte/travis-helper-cpan-pm.git
+  - git clone --depth=1 https://github.com/eserte/travis-helper-cpan-pm.git
   - ./travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps
 install:
 script:
