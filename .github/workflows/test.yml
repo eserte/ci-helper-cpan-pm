@@ -76,10 +76,10 @@ jobs:
     - name: check Tk
       run: perl -MTk -e1
 
-    - name: install WWW::Curl
-      run: cpan WWW::Curl
-    - name: check WWW::Curl
-      run: perl -MWWW::Curl -e1
+    - name: install Net::Curl
+      run: cpan Net::Curl
+    - name: check Net::Curl
+      run: perl -MNet::Curl -e1
 
     - name: install XML::LibXML
       run: cpan XML::LibXML
