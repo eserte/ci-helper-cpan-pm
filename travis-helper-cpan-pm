@@ -171,7 +171,9 @@ if ($enable_sysdeps) {
     }
 }
 
-cpan_mod_install $yaml_module;
+if (!eval q{ require $yaml_module; 1 }) {
+    cpan_mod_install $yaml_module;
+}
 # XXX install also other modules? Expect?
 
 # REPO BEGIN
