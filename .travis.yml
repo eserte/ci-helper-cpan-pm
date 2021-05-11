@@ -34,7 +34,7 @@ matrix:
 
 before_install:
   - ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master $EXTRA_TRAVIS_HELPER_CPAN_PM_OPTS
-  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then (cd /etc/apt/sources.list.d && sudo rm -f mongodb.list google-chrome.list cassandra.list github_git-lfs.list couchdb.list); fi
+  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then (cd /etc/apt/sources.list.d && sudo rm -f mongodb.list google-chrome.list cassandra.list github_git-lfs.list couchdb.list pgdg.list); fi
   - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then sudo apt-get update -qq; fi
 
 install:
