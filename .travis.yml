@@ -50,7 +50,8 @@ install:
   - cpan File::LibMagic Curses DB_File GD Imager Linux::Inotify2 Pango Tk WWW::Curl
   # XML::LibXML tries to /System/Library/Perl/Extras/5.18/XML/SAX/ParserDetails.ini which is not allowed
   - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then cpan XML::LibXML; fi
-  - if [[ "$TRAVIS_PERL_VERSION" != "5.8" && "$TRAVIS_PERL_VERSION" != "5.10" ]] ; then cpan Prima; fi
+  # minimum perl version is 5.12; fails on arm64, see also http://www.cpantesters.org/cpan/report/6f5410aa-cf6f-11eb-976e-955d73356c18
+  - if [[ "$TRAVIS_PERL_VERSION" != "5.8" && "$TRAVIS_PERL_VERSION" != "5.10" && "$TRAVIS_CPU_ARCH" != "arm64" ]] ; then cpan Prima; fi
 
 script:
   - perl -c travis-helper-cpan-pm
