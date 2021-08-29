@@ -47,6 +47,8 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then sudo apt-get update -qq; fi
 
 install:
+  # t/9.t in Glib (dep of Pango) sometimes fails: https://rt.cpan.org/Ticket/Display.html?id=127871
+  - cpan Glib || cpan Glib || cpan Glib
   - cpan File::LibMagic Curses DB_File GD Imager Linux::Inotify2 Pango Tk WWW::Curl
   # XML::LibXML tries to /System/Library/Perl/Extras/5.18/XML/SAX/ParserDetails.ini which is not allowed
   - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then cpan XML::LibXML; fi
