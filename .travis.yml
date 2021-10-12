@@ -50,10 +50,10 @@ install:
   # t/9.t in Glib (dep of Pango) sometimes fails: https://rt.cpan.org/Ticket/Display.html?id=127871
   - cpan Glib || cpan Glib || cpan Glib
   - cpan File::LibMagic Curses DB_File GD Imager Linux::Inotify2 Pango Tk WWW::Curl
-  # XML::LibXML tries to /System/Library/Perl/Extras/5.18/XML/SAX/ParserDetails.ini which is not allowed
+  # XML::LibXML tries to change /System/Library/Perl/Extras/5.18/XML/SAX/ParserDetails.ini which is not allowed
   - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then cpan XML::LibXML; fi
   # minimum perl version is 5.12; fails on arm64, see also http://www.cpantesters.org/cpan/report/6f5410aa-cf6f-11eb-976e-955d73356c18
-  - if [[ "$TRAVIS_PERL_VERSION" != "5.8" && "$TRAVIS_PERL_VERSION" != "5.10" && "$TRAVIS_CPU_ARCH" != "arm64" ]] ; then cpan Prima; fi
+  - if [[ "$TRAVIS_PERL_VERSION" != "5.8" && "$TRAVIS_PERL_VERSION" != "5.10" && "$TRAVIS_CPU_ARCH" != "arm64" ]] ; then cpan Prima && INSTALLED_PRIMA="yes"; fi
 
 script:
   - perl -c travis-helper-cpan-pm
@@ -64,8 +64,8 @@ script:
   - perl -MImager -e1
   - perl -MLinux::Inotify2 -e1
   - perl -MPango -e1
-## XXX fails without DISPLAY
-#  - perl -MPrima -e1
+  # "use" fails without DISPLAY, so just do a "require" within eval
+  - if [[ "$INSTALLED_PRIMA" = "yes" ]]; then perl -e 'eval { require Prima }; if ($@ !~ /Error.*open display/) { die "Unexpected error <$@>" }'; fi
   - perl -MTk -e1
   - perl -MWWW::Curl -e1
   - perl -MXML::LibXML -e1
