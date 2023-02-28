@@ -83,7 +83,7 @@ my $sudo_formatted = $with_sudo ? 'sudo ' : '';
 
 my $cpan_pm_version = do {
     my $cpan_pm_path = module_path("CPAN");
-    die "Unexpected: cannot find path to CPAN.pm" if !$cpan_pm_path;
+    die "Unexpected: cannot find path to CPAN.pm. Current \@INC is: @INC" if !$cpan_pm_path;
     MM->parse_version($cpan_pm_path);
 };
 
