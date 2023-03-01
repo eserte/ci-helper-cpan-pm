@@ -46,9 +46,12 @@ Or in Github Actions (see also .github/workflows/test.yml):
 ```
     ...
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
+      with:
+        repository: eserte/travis-helper-cpan-pm
+        path: travis-helper-cpan-pm
     - name: before_install
       run: |
-        ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master
+        $GITHUB_WORKSPACE/travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master
     ...
 ```

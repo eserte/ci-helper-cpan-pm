@@ -19,7 +19,10 @@ jobs:
          - os: 'ubuntu-22.04'
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
+      with:
+        repository: eserte/travis-helper-cpan-pm
+        path: travis-helper-cpan-pm
 
     - name: apt hacks
       # the already installed libgd3 conflicts with libgd-dev to be installed
@@ -32,9 +35,9 @@ jobs:
 
     - name: before_install
       run: |
-        ./travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master
+        $GITHUB_WORKSPACE/travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps --sysdeps-branch=master
     - name: check travis-helper-cpan-pm
-      run: perl -c travis-helper-cpan-pm
+      run: perl -c $GITHUB_WORKSPACE/travis-helper-cpan-pm/travis-helper-cpan-pm
 
     - name: install GD
       run: cpan GD
