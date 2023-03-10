@@ -91,7 +91,7 @@ jobs:
 
     - name: check if Prima version is OK
       run: |
-        if zgrep -l KARASIK/Prima-1.68001.tar.gz ~/.cpan/sources/modules/02packages.details.txt.gz >/dev/null; then echo "SKIP_PRIMA=true" >> $GITHUB_ENV; fi
+        if zgrep -l KARASIK/Prima-1.68002.tar.gz ~/.cpan/sources/modules/02packages.details.txt.gz >/dev/null; then echo "SKIP_PRIMA=true" >> $GITHUB_ENV; fi
     - name: install Prima
       run: cpan Prima
       if: "!env.SKIP_PRIMA"
