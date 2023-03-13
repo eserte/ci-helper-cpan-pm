@@ -1,4 +1,6 @@
 $CPAN::Config = {
+  'allow_installing_outdated_dists' => q[yes],
+  'allow_installing_module_downgrades' => q[no],
   'auto_commit' => q[0],
   'build_cache' => q[100],
   'build_dir' => q[@HOME@/.cpan/build],
