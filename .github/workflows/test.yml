@@ -1,10 +1,11 @@
 name: CI
 
 on:
-  push:
-    branches-ignore:
-      - '*travis*'
-      - '*appveyor*'
+  workflow_dispatch:
+#  push:
+#    branches-ignore:
+#      - '*travis*'
+#      - '*appveyor*'
   schedule:
     - cron:  '0 20 * * 5'
 
