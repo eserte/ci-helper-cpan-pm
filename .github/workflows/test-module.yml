@@ -1,0 +1,51 @@
+name: Test specific CPAN module
+
+on:
+  workflow_dispatch:
+    inputs:
+      module:
+        type: string
+        required: true
+      include-distroprefs:
+        type: boolean
+        default: true
+      include-sysdeps:
+        type: boolean
+        default: true
+      sysdeps-branch:
+        type: string
+        default: master
+
+jobs:
+  test-module:
+    name: Test ${{ inputs.module }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+     matrix:
+       include:
+         - os: 'ubuntu-20.04'
+         - os: 'ubuntu-22.04'
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        repository: eserte/ci-helper-cpan-pm
+        path: ci-helper-cpan-pm
+    - name: before_install
+      run: |
+        distroprefs_opts=
+        if [ ${{ inputs.include-distroprefs == 'true' }} ]
+        then
+            distroprefs_opts='--distroprefs=https://github.com/eserte/srezic-cpan-distroprefs'
+        fi
+        sysdeps_opts=
+        if [ ${{ inputs.include-sysdeps == 'true' }} ]
+        then
+            sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
+        fi
+        set -ex
+        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm $distroprefs_opts $sysdeps_opts
+    - name: install ${{ inputs.module }}
+      run: cpan ${{ inputs.module }}
+    - name: check ${{ inputs.module }}
+      run: perl -M${{ inputs.module }} -e1
