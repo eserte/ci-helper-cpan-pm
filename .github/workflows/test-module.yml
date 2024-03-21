@@ -31,6 +31,9 @@ jobs:
             container: ~
           - os: 'ubuntu-latest'
             container: fedora:39
+          ## XXX not enabled yet --- many modules will likely fail because of outdated ExtUtils-MakeMaker
+          #- os: 'ubuntu-latest'
+          #  container: centos:7
 
     steps:
     - uses: actions/checkout@v3
@@ -40,14 +43,15 @@ jobs:
 
     - name: "install perl, CPAN.pm, git..."
       run: |
-        yum -y install "perl(CPAN)" git
-      if: "startsWith(matrix.container, 'fedora')"
+        yum -y install "perl(CPAN)" "perl(Test::More)" git make gcc
+      if: "startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos')"
 
     - name: apt hacks
       # the already installed libgd3 conflicts with libgd-dev to be installed
       # also, /etc/apt/sources.list should be sufficient; all the other repositories are possibly problematic
       run: |
         if [[ -d /etc/apt/sources.list.d ]]; then
+          echo "Remove additional apt sources..."
           sudo rm -f /etc/apt/sources.list.d/*.list
           sudo apt-get update -qq
           sudo apt-get remove -y libgd3 nginx
