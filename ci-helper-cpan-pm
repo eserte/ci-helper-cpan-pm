@@ -10,7 +10,7 @@ use Getopt::Long;
 
 my $home_dir = $ENV{HOME};
 my $sysdeps_clone_url = 'https://github.com/eserte/cpan-plugin-sysdeps';
-my $with_sudo = 1;
+my $with_sudo = $> != 0;
 my @urllist;
 my @default_urllist = qw(http://cpan.metacpan.org/ http://cpan.cpantesters.org/ http://cpan.develooper.com/ ftp://ftp.funet.fi/pub/CPAN);
 my $yaml_module = 'YAML';
