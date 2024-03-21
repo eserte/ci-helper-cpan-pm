@@ -19,13 +19,18 @@ on:
 
 jobs:
   test-module:
-    name: Test ${{ inputs.module }} on ${{ matrix.os }}
+    name: Test ${{ inputs.module }} on ${{ matrix.os }} and container ${{ matrix.container || '<none>' }}
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
     strategy:
-     matrix:
-       include:
-         - os: 'ubuntu-20.04'
-         - os: 'ubuntu-22.04'
+      matrix:
+        include:
+          - os: 'ubuntu-20.04'
+            container: ~
+          - os: 'ubuntu-22.04'
+            container: ~
+          - os: 'ubuntu-latest'
+            container: fedora:39
 
     steps:
     - uses: actions/checkout@v3
@@ -33,14 +38,20 @@ jobs:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
 
+    - name: "install perl, CPAN.pm, git..."
+      run: |
+        yum -y install "perl(CPAN)" git
+      if: "startsWith(matrix.container, 'fedora')"
+
     - name: apt hacks
       # the already installed libgd3 conflicts with libgd-dev to be installed
       # also, /etc/apt/sources.list should be sufficient; all the other repositories are possibly problematic
       run: |
-        sudo rm -f /etc/apt/sources.list.d/*.list
-        sudo apt-get update -qq
-        sudo apt-get remove -y libgd3 nginx
-      if: "startsWith(matrix.os, 'ubuntu-')"
+        if [[ -d /etc/apt/sources.list.d ]]; then
+          sudo rm -f /etc/apt/sources.list.d/*.list
+          sudo apt-get update -qq
+          sudo apt-get remove -y libgd3 nginx
+        fi
 
     - name: before_install
       run: |
