@@ -31,9 +31,8 @@ jobs:
             container: ~
           - os: 'ubuntu-latest'
             container: fedora:39
-          ## XXX not enabled yet --- many modules will likely fail because of outdated ExtUtils-MakeMaker
-          #- os: 'ubuntu-latest'
-          #  container: centos:7
+          - os: 'ubuntu-latest'
+            container: centos:7
 
     steps:
     - uses: actions/checkout@v3
@@ -43,7 +42,7 @@ jobs:
 
     - name: "install perl, CPAN.pm, git..."
       run: |
-        yum -y install "perl(CPAN)" "perl(Test::More)" git make gcc
+        yum -y install "perl(CPAN)" "perl(Test::More)" "perl(Parse::CPAN::Meta)" git make gcc
       if: "startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos')"
 
     - name: apt hacks
