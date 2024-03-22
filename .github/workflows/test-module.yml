@@ -47,6 +47,11 @@ jobs:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
 
+    - name: "CentOS: install epel"
+      run: |
+        yum -y install epel-release
+      if: "startsWith(matrix.container, 'centos')"
+
     - name: "rpm-based systems: install perl, CPAN.pm, git..."
       run: |
         yum -y install "perl(CPAN)" "perl(Test::More)" "perl(Parse::CPAN::Meta)" git make gcc
