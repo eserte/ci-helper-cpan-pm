@@ -33,6 +33,13 @@ jobs:
             container: fedora:39
           - os: 'ubuntu-latest'
             container: centos:7
+          ## XXX needs more work
+          #- os: 'ubuntu-latest'
+          #  container: debian:stretch
+          - os: 'ubuntu-latest'
+            container: debian:buster
+          - os: 'ubuntu-latest'
+            container: debian:bookworm
 
     steps:
     - uses: actions/checkout@v3
@@ -40,10 +47,15 @@ jobs:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
 
-    - name: "install perl, CPAN.pm, git..."
+    - name: "rpm-based systems: install perl, CPAN.pm, git..."
       run: |
         yum -y install "perl(CPAN)" "perl(Test::More)" "perl(Parse::CPAN::Meta)" git make gcc
       if: "startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos')"
+
+    - name: "apt-based systems: install perl, CPAN.pm, git..."
+      run: |
+        apt-get update -yq && apt-get install -yqq perl git make gcc
+      if: "startsWith(matrix.container, 'debian')"
 
     - name: apt hacks
       # the already installed libgd3 conflicts with libgd-dev to be installed
