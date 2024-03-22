@@ -19,7 +19,7 @@ on:
 
 jobs:
   test-module:
-    name: Test ${{ inputs.module }} on ${{ matrix.os }} and container ${{ matrix.container || '<none>' }}
+    name: on ${{ matrix.container || matrix.os }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
     strategy:
