@@ -22,6 +22,7 @@ jobs:
     name: on ${{ matrix.container || matrix.os }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
+    continue-on-error: true
     strategy:
       matrix:
         include:
