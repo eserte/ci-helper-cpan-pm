@@ -43,6 +43,9 @@ jobs:
             container: debian:buster
           - os: 'ubuntu-latest'
             container: debian:bookworm
+          ## XXX would work if CPAN::Plugin::Sysdeps had alpine support
+          #- os: 'ubuntu-latest'
+          #  container: alpine:latest
 
     steps:
     - uses: actions/checkout@v3
@@ -64,6 +67,11 @@ jobs:
       run: |
         apt-get update -yq && apt-get install -yqq perl git make gcc
       if: "startsWith(matrix.container, 'debian')"
+
+    - name: "apk-based systems: install perl, CPAN.pm, git..."
+      run: |
+        apk update -q && apk add -q perl perl-utils git make gcc
+      if: "startsWith(matrix.container, 'alpine')"
 
     - name: apt hacks
       # the already installed libgd3 conflicts with libgd-dev to be installed
