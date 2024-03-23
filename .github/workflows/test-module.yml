@@ -26,6 +26,8 @@ jobs:
     strategy:
       matrix:
         include:
+          - os: 'macos-12'
+            container: ~
           - os: 'ubuntu-20.04'
             container: ~
           - os: 'ubuntu-22.04'
