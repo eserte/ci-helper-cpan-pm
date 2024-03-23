@@ -26,23 +26,25 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: 'macos-12'
-            container: ~
-          - os: 'ubuntu-20.04'
-            container: ~
-          - os: 'ubuntu-22.04'
-            container: ~
+#          - os: 'macos-12'
+#            container: ~
+#          - os: 'ubuntu-20.04'
+#            container: ~
+#          - os: 'ubuntu-22.04'
+#            container: ~
+#          - os: 'ubuntu-latest'
+#            container: fedora:39
+#          - os: 'ubuntu-latest'
+#            container: centos:7
+#          ## XXX needs more work
+#          #- os: 'ubuntu-latest'
+#          #  container: debian:stretch
+#          - os: 'ubuntu-latest'
+#            container: debian:buster
+#          - os: 'ubuntu-latest'
+#            container: debian:bookworm
           - os: 'ubuntu-latest'
-            container: fedora:39
-          - os: 'ubuntu-latest'
-            container: centos:7
-          ## XXX needs more work
-          #- os: 'ubuntu-latest'
-          #  container: debian:stretch
-          - os: 'ubuntu-latest'
-            container: debian:buster
-          - os: 'ubuntu-latest'
-            container: debian:bookworm
+            container: alpine:latest
 
     steps:
     - uses: actions/checkout@v3
@@ -64,6 +66,11 @@ jobs:
       run: |
         apt-get update -yq && apt-get install -yqq perl git make gcc
       if: "startsWith(matrix.container, 'debian')"
+
+    - name: "apk-based systems: install perl, CPAN.pm, git..."
+      run: |
+        apk update -q && apk add -q perl perl-utils git make gcc
+      if: "startsWith(matrix.container, 'alpine')"
 
     - name: apt hacks
       # the already installed libgd3 conflicts with libgd-dev to be installed
