@@ -133,6 +133,7 @@ jobs:
         operating_system: freebsd
         version: '${{ matrix.osvers }}'
         shell: bash
+        sync_files: runner-to-vm
         run: |
           sudo pkg update
           sudo pkg install -y perl5 git
