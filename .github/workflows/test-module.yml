@@ -99,6 +99,8 @@ jobs:
         set -ex
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm $distroprefs_opts $sysdeps_opts
     - name: install ${{ inputs.module }}
-      run: cpan ${{ inputs.module }}
+      run: |
+        cpan ${{ inputs.module }}
     - name: check ${{ inputs.module }}
-      run: perl -M${{ inputs.module }} -e1
+      run: |
+        perl -M${{ inputs.module }} -e 'print "::notice::Build success for: ${{ inputs.module }} ", $${{ inputs.module }}::VERSION, "\n"'
