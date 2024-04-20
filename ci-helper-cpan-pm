@@ -11,13 +11,14 @@ use Getopt::Long;
 my $home_dir = $ENV{HOME};
 my $sysdeps_clone_url = 'https://github.com/eserte/cpan-plugin-sysdeps';
 my $with_sudo = $> != 0;
+my $run_tests = 1;
 my @urllist;
 my @default_urllist = qw(http://cpan.metacpan.org/ http://cpan.cpantesters.org/ http://cpan.develooper.com/ ftp://ftp.funet.fi/pub/CPAN);
 my $yaml_module = 'YAML';
 
 sub usage () {
     die <<EOF;
-usage: $0 [--no-sudo] [--home-dir=directory] [--dry-run] [--distroprefs=git-clone-url] [--enable-sysdeps] [--sysdeps-branch ...] [--yaml-module ...] [--mirrorurl=url ...] [--debug]
+usage: $0 [--no-sudo] [--no-test] [--home-dir=directory] [--dry-run] [--distroprefs=git-clone-url] [--enable-sysdeps] [--sysdeps-branch ...] [--yaml-module ...] [--mirrorurl=url ...] [--debug]
 EOF
 }
 
@@ -29,6 +30,7 @@ GetOptions
      'enable-sysdeps' => \my $enable_sysdeps,
      'sysdeps-branch=s'=>\my $sysdeps_branch,
      'sudo!'          =>    \$with_sudo,
+     'test!'          =>    \$run_tests,
      'mirrorurl=s@'   =>    \@urllist,
      'debug!'         => \my $debug,
      'yaml-module=s'  =>    \$yaml_module,
@@ -60,9 +62,9 @@ sub git_clone ($$;@) {
 sub cpan_mod_install (@) {
     my(@cpan_mods) = @_;
     if (@cpan_mods) {
-	print STDERR "Install @cpan_mods... ";
+	print STDERR ($run_tests ? "Test and install" : "Install") . " @cpan_mods... ";
 	if (!$dry_run) {
-	    system 'cpan', @cpan_mods;
+	    system 'cpan', (!$run_tests ? '-T' : ()), @cpan_mods;
 	}
     }
     print STDERR "done.\n";
@@ -149,7 +151,7 @@ if ($enable_sysdeps) {
     if (!$dry_run) {
 	system $^X, 'Makefile.PL';
 	die "Makefile.PL failed" if $? != 0;
-	system 'make', 'all', 'test';
+	system 'make', 'all', ($run_tests ? 'test' : ());
 	die "build/test failed" if $? != 0;
 	{
 	    my @cmd = qw(make install);
