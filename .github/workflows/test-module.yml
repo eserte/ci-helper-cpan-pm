@@ -112,3 +112,44 @@ jobs:
     - name: check ${{ inputs.module }}
       run: |
         perl -M${{ inputs.module }} -e 'print "::notice::Build success for: ${{ inputs.module }} ", $${{ inputs.module }}::VERSION, "\n"'
+
+  test-module-freebsd:
+    name: on freebsd ${{ matrix.osvers }}
+    runs-on: macos-12
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - osvers: '13.2'
+          - osvers: '14.0'
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: eserte/ci-helper-cpan-pm
+        path: ci-helper-cpan-pm
+
+    - uses: cross-platform-actions/action@v0.23.0
+      with:
+        operating_system: freebsd
+        version: '${{ matrix.osvers }}'
+        shell: bash
+        run: |
+          sudo pkg update
+          sudo pkg install -y perl5 git
+
+          distroprefs_opts=
+          if [ ${{ inputs.include-distroprefs == 'true' }} ]
+          then
+              distroprefs_opts='--distroprefs=https://github.com/eserte/srezic-cpan-distroprefs'
+          fi
+          sysdeps_opts=
+          if [ ${{ inputs.include-sysdeps == 'true' }} ]
+          then
+              sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
+          fi
+          set -ex
+          $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm $distroprefs_opts $sysdeps_opts
+
+          cpan ${{ inputs.module }}
+
+          perl -M${{ inputs.module }} -e 'print "::notice::Build success for: ${{ inputs.module }} ", $${{ inputs.module }}::VERSION, "\n"'
