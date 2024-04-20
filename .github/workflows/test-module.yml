@@ -105,7 +105,7 @@ jobs:
             sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
         fi
         set -ex
-        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm $distroprefs_opts $sysdeps_opts
+        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts
     - name: install ${{ inputs.module }}
       run: |
         cpan ${{ inputs.module }}
@@ -148,7 +148,7 @@ jobs:
               sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
           fi
           set -ex
-          $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm $distroprefs_opts $sysdeps_opts
+          $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts
 
           cpan ${{ inputs.module }}
 
