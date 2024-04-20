@@ -52,6 +52,12 @@ jobs:
       with:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
+      if: matrix.container == 'centos:7'
+    - uses: actions/checkout@v4
+      with:
+        repository: eserte/ci-helper-cpan-pm
+        path: ci-helper-cpan-pm
+      if: matrix.container != 'centos:7'
 
     - name: "CentOS: install epel"
       run: |
