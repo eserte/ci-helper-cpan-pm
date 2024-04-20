@@ -22,8 +22,8 @@ jobs:
     name: on ${{ matrix.container || matrix.os }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
-    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: 'macos-12'
@@ -32,6 +32,8 @@ jobs:
             container: ~
           - os: 'ubuntu-22.04'
             container: ~
+          - os: 'ubuntu-latest'
+            container: ubuntu:24.04
           - os: 'ubuntu-latest'
             container: fedora:39
           - os: 'ubuntu-latest'
@@ -72,7 +74,7 @@ jobs:
     - name: "apt-based systems: install perl, CPAN.pm, git..."
       run: |
         apt-get update -yq && apt-get install -yqq perl git make gcc
-      if: "startsWith(matrix.container, 'debian')"
+      if: "startsWith(matrix.container, 'debian') || startsWith(matrix.container, 'ubuntu')"
 
     - name: "apk-based systems: install perl, CPAN.pm, git..."
       run: |
