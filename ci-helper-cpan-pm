@@ -179,7 +179,30 @@ if ($enable_sysdeps) {
 }
 
 if (!eval qq{ require $yaml_module; 1 }) {
-    cpan_mod_install $yaml_module;
+ TRY_INSTALL_YAML: {
+	my $os_release = get_os_release();
+	if ($os_release && (($os_release->{ID}||'') eq 'debian' || ($os_release->{ID_LIKE}||'') eq 'debian')) {
+	    my %pm_to_deb = (
+		'YAML'       => 'libyaml-perl',
+		'YAML::XS'   => 'libyaml-libyaml-perl',
+		'YAML::Syck' => 'libyaml-syck-perl',
+	    );
+	    my $package = $pm_to_deb{$yaml_module};
+	    my $sudocmd = $< == 0 ? "" : "sudo ";
+	    if (defined $package) {
+		my $cmd = "${sudocmd}apt-get -qqy update && ${sudocmd}apt-get -qqy install $package";
+		system $cmd;
+		if ($? != 0) {
+		    warn "WARN: the command '$cmd' failed, will fallback to CPAN install...\n";
+		}
+		if (eval qq{ require $yaml_module; 1 }) {
+		    last TRY_INSTALL_YAML;
+		}
+	    }
+	}
+
+	cpan_mod_install $yaml_module;
+    }
 }
 # XXX install also other modules? Expect?
 
@@ -201,3 +224,28 @@ sub module_path {
 }
 # REPO END
 
+# Taken from Doit.pm
+{
+    my %cached_os_release_per_file;
+    sub get_os_release {
+	my(%opts) = @_;
+	my $candidate_files = delete $opts{file} || ['/etc/os-release', '/usr/lib/os-release'];
+	my $refresh = delete $opts{refresh} || 0;
+	die 'Unhandled options: ' . join(' ', %opts) if %opts;
+	for my $candidate_file (ref $candidate_files eq 'ARRAY' ? @$candidate_files : $candidate_files) {
+	    if ($refresh || !$cached_os_release_per_file{$candidate_file}) {
+		if (open my $fh, '<', $candidate_file) {
+		    my %c;
+		    while(<$fh>) {
+			if (my($k,$v) = $_ =~ m{^(.*?)=["']?(.*?)["']?$}) {
+			    $c{$k} = $v;
+			}
+		    }
+		    $cached_os_release_per_file{$candidate_file} = \%c;
+		}
+	    }
+	    return $cached_os_release_per_file{$candidate_file} if $cached_os_release_per_file{$candidate_file};
+	}
+	undef;
+    }
+}
