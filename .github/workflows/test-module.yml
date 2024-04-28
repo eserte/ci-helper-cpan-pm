@@ -109,6 +109,10 @@ jobs:
         fi
         set -ex
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts
+    - name: cpan-sysdeps check
+      continue-on-error: true
+      run: |
+        cpan-sysdeps --cpanmod ${{ inputs.module }}
     - name: install ${{ inputs.module }}
       run: |
         cpan ${{ inputs.module }}
