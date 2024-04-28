@@ -101,12 +101,12 @@ jobs:
     - name: before_install
       run: |
         distroprefs_opts=
-        if [ ${{ inputs.include-distroprefs == 'true' }} ]
+        if [ ${{ inputs.include-distroprefs }} = 'true' ]
         then
             distroprefs_opts='--distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --distroprefs-branch=${{ inputs.distroprefs-branch }}'
         fi
         sysdeps_opts=
-        if [ ${{ inputs.include-sysdeps == 'true' }} ]
+        if [ ${{ inputs.include-sysdeps }} = 'true' ]
         then
             sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
         fi
@@ -149,12 +149,12 @@ jobs:
           sudo pkg install -y perl5 git
 
           distroprefs_opts=
-          if [ ${{ inputs.include-distroprefs == 'true' }} ]
+          if [ ${{ inputs.include-distroprefs }} = 'true' ]
           then
               distroprefs_opts='--distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --distroprefs-branch=${{ inputs.distroprefs-branch }}'
           fi
           sysdeps_opts=
-          if [ ${{ inputs.include-sysdeps == 'true' }} ]
+          if [ ${{ inputs.include-sysdeps }} = 'true' ]
           then
               sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
           fi
