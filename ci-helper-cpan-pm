@@ -18,23 +18,27 @@ my $yaml_module = 'YAML';
 
 sub usage () {
     die <<EOF;
-usage: $0 [--no-sudo] [--no-test] [--home-dir=directory] [--dry-run] [--distroprefs=git-clone-url] [--distroprefs-branch ...] [--enable-sysdeps] [--sysdeps-branch ...] [--yaml-module ...] [--mirrorurl=url ...] [--debug]
+usage: $0 [--no-sudo] [--no-test] [--dry-run] [--debug]
+	[--home-dir=directory]
+	[--distroprefs=git-clone-url] [--distroprefs-branch ...]
+	[--enable-sysdeps] [--sysdeps-branch ...]
+	[--yaml-module ...] [--mirrorurl=url ...]
 EOF
 }
 
 GetOptions
     (
-     'home-dir=s'     =>    \$home_dir,
-     'dry-run'        => \my $dry_run,
-     'distroprefs=s'  => \my $distro_prefs_clone_url,
+     'home-dir=s'           =>    \$home_dir,
+     'dry-run'              => \my $dry_run,
+     'distroprefs=s'        => \my $distro_prefs_clone_url,
      'distroprefs-branch=s' => \my $distroprefs_branch,
-     'enable-sysdeps' => \my $enable_sysdeps,
-     'sysdeps-branch=s'=>\my $sysdeps_branch,
-     'sudo!'          =>    \$with_sudo,
-     'test!'          =>    \$run_tests,
-     'mirrorurl=s@'   =>    \@urllist,
-     'debug!'         => \my $debug,
-     'yaml-module=s'  =>    \$yaml_module,
+     'enable-sysdeps'       => \my $enable_sysdeps,
+     'sysdeps-branch=s'     => \my $sysdeps_branch,
+     'sudo!'                =>    \$with_sudo,
+     'test!'                =>    \$run_tests,
+     'mirrorurl=s@'         =>    \@urllist,
+     'debug!'               => \my $debug,
+     'yaml-module=s'        =>    \$yaml_module,
     ) or usage;
 
 sub create_dir ($) {
