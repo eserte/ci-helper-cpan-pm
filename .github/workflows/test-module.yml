@@ -48,6 +48,8 @@ jobs:
             container: debian:buster
           - os: 'ubuntu-latest'
             container: debian:bookworm
+          - os: 'ubuntu-latest'
+            container: debian:trixie
           ## XXX would work if CPAN::Plugin::Sysdeps had alpine support
           #- os: 'ubuntu-latest'
           #  container: alpine:latest
