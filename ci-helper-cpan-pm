@@ -181,19 +181,36 @@ if ($enable_sysdeps) {
 if (!eval qq{ require $yaml_module; 1 }) {
  TRY_INSTALL_YAML: {
 	my $os_release = get_os_release();
-	if ($os_release && (($os_release->{ID}||'') eq 'debian' || ($os_release->{ID_LIKE}||'') eq 'debian')) {
-	    my %pm_to_deb = (
-		'YAML'       => 'libyaml-perl',
-		'YAML::XS'   => 'libyaml-libyaml-perl',
-		'YAML::Syck' => 'libyaml-syck-perl',
-	    );
-	    my $package = $pm_to_deb{$yaml_module};
-	    my $sudocmd = $< == 0 ? "" : "sudo ";
-	    if (defined $package) {
-		my $cmd = "${sudocmd}apt-get -qqy update && ${sudocmd}apt-get -qqy install $package";
-		system $cmd;
+	if ($os_release) {
+	    my $install_cmd;
+	    if (($os_release->{ID}||'') eq 'debian' || ($os_release->{ID_LIKE}||'') eq 'debian') {
+		my %pm_to_deb = (
+		    'YAML'       => 'libyaml-perl',
+		    'YAML::XS'   => 'libyaml-libyaml-perl',
+		    'YAML::Syck' => 'libyaml-syck-perl',
+		);
+		my $package = $pm_to_deb{$yaml_module};
+		if (defined $package) {
+		    my $sudocmd = $< == 0 ? "" : "sudo ";
+		    $install_cmd = "${sudocmd}apt-get -qqy update && ${sudocmd}apt-get -qqy install $package";
+		}
+	    } elsif (($os_release->{ID}||'') eq 'freebsd') {
+		my %pm_to_pkg = (
+		    'YAML'       => 'p5-YAML',
+		    'YAML::XS'   => 'p5-YAML-LibYAML',
+		    'YAML::PP'   => 'p5-YAML-PP',
+		    'YAML::Syck' => 'p5-YAML-Syck',
+		);
+		my $package = $pm_to_pkg{$yaml_module};
+		if (defined $package) {
+		    my $sudocmd = $< == 0 ? "" : "sudo ";
+		    $install_cmd = "${sudocmd}pkg install -y $package";
+		}
+	    }
+	    if (defined $install_cmd) {
+		system $install_cmd;
 		if ($? != 0) {
-		    warn "WARN: the command '$cmd' failed, will fallback to CPAN install...\n";
+		    warn "WARN: the command '$install_cmd' failed, will fallback to CPAN install...\n";
 		}
 		if (eval qq{ require $yaml_module; 1 }) {
 		    last TRY_INSTALL_YAML;
