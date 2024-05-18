@@ -86,6 +86,11 @@ jobs:
         apk update -q && apk add -q perl perl-utils git make gcc
       if: "startsWith(matrix.container, 'alpine')"
 
+    - name: "perlbrew-based systems: add Perl executable path to GITHUB_PATH"
+      run: |
+        echo "$(perl -MConfig -e 'print $Config{sitebin}')" >> $GITHUB_PATH
+      if: "startsWith(matrix.os, 'macos')"
+
     - name: apt hacks
       # the already installed libgd3 conflicts with libgd-dev to be installed
       # also, /etc/apt/sources.list should be sufficient; all the other repositories are possibly problematic
