@@ -76,9 +76,9 @@ jobs:
         yum -y install "perl(CPAN)" "perl(Test::More)" "perl(Parse::CPAN::Meta)" git make gcc
       if: "startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos')"
 
-    - name: "apt-based systems: install perl, CPAN.pm, git..."
+    - name: "apt-based systems: install perl, CPAN.pm, git, make, cc..."
       run: |
-        apt-get update -yq && apt-get install -yqq perl git make gcc
+        apt-get update -yq && apt-get install -yqq perl git make gcc g++
       if: "startsWith(matrix.container, 'debian') || startsWith(matrix.container, 'ubuntu')"
 
     - name: "apk-based systems: install perl, CPAN.pm, git..."
