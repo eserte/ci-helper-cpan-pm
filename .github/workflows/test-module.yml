@@ -73,7 +73,7 @@ jobs:
 
     - name: "rpm-based systems: install perl, CPAN.pm, git..."
       run: |
-        yum -y install "perl(CPAN)" "perl(Test::More)" "perl(Parse::CPAN::Meta)" git make gcc
+        yum -y install "perl(CPAN)" "perl(Test::More)" "perl(Parse::CPAN::Meta)" git make gcc patch
       if: "startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos')"
 
     - name: "apt-based systems: install perl, CPAN.pm, git, make, cc..."
