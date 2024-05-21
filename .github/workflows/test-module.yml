@@ -121,6 +121,10 @@ jobs:
       continue-on-error: true
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }}
+    - name: cpan-sysdeps dry-run commands
+      continue-on-error: true
+      run: |
+        cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
     - name: install ${{ inputs.module }}
       run: |
         cpan ${{ inputs.module }}
