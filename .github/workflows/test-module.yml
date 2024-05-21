@@ -37,8 +37,11 @@ jobs:
             container: ~
           - os: 'ubuntu-latest'
             container: ubuntu:24.04
+          # fedora: use the minimum and maximum supported versions
           - os: 'ubuntu-latest'
-            container: fedora:39
+            container: fedora:38
+          - os: 'ubuntu-latest'
+            container: fedora:40
           - os: 'ubuntu-latest'
             container: centos:7
           ## XXX needs more work
