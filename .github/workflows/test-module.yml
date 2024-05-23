@@ -39,6 +39,9 @@ jobs:
             container: ~
           - os: 'ubuntu-24.04'
             container: ~
+          # another ubuntu as a container, not runner
+          - os: 'ubuntu-latest'
+            container: ubuntu:24.04
           # fedora: use the minimum and maximum supported versions
           - os: 'ubuntu-latest'
             container: fedora:38
