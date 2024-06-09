@@ -140,6 +140,44 @@ jobs:
       run: |
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check ${{ inputs.module }}
 
+  test-module-windows:
+    name: on windows
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: eserte/ci-helper-cpan-pm
+        path: ci-helper-cpan-pm
+    - name: before_install
+      run: |
+        $distroprefs_opts = ""
+        if ("${{ inputs.include-distroprefs }}" -eq "true") {
+            $distroprefs_opts = "--distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --distroprefs-branch=${{ inputs.distroprefs-branch }}"
+        }
+        $sysdeps_opts = ""
+        if ("${{ inputs.include-sysdeps }}" -eq "true") {
+            $sysdeps_opts = "--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}"
+        }
+        $ci_helper_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts"
+        Write-Host $ci_helper_cmd
+        Invoke-Expression $ci_helper_cmd
+    - name: cpan-sysdeps check
+      continue-on-error: true
+      run: |
+        cpan-sysdeps --cpanmod ${{ inputs.module }}
+    - name: cpan-sysdeps dry-run commands
+      continue-on-error: true
+      run: |
+        cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
+    - name: install ${{ inputs.module }}
+      run: |
+        cpan ${{ inputs.module }}
+    - name: check ${{ inputs.module }}
+      run: |
+        $check_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\gh-mod-check ${{ inputs.module }}"
+        Write-Host $check_cmd
+        Invoke-Expression $check_cmd
+
   test-module-freebsd:
     name: on freebsd ${{ matrix.osvers }}
     runs-on: ubuntu-22.04
