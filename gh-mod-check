@@ -1,0 +1,23 @@
+#!/usr/bin/env perl
+
+# To be used within a github workflow:
+
+my $mod = shift || die "Please specify module to check!";
+if ($mod =~ m{[/.]}) { # looks like a distribution
+    if ($mod =~ m{.*/(.*)}) {
+	$mod = $1; # basename
+    }
+    $mod =~ s{\.(tar\.gz|tar\.bz2|zip)$}{};
+    $mod =~ s{-v?\d.*}{};
+    $mod =~ s{-}{::}g;
+}
+
+if (!eval qq{use $mod; 1}) {
+    die "use $mod failed: $@" if $@;
+}
+my $mod_version = eval qq{\$${mod}::VERSION};
+if (!defined $mod_version) {
+    $mod_version = '<version undefined>';
+}
+
+print "::notice::Build success for: $mod ", $mod_version, "\n";

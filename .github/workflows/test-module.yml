@@ -138,7 +138,7 @@ jobs:
         cpan ${{ inputs.module }}
     - name: check ${{ inputs.module }}
       run: |
-        perl -M${{ inputs.module }} -e 'print "::notice::Build success for: ${{ inputs.module }} ", $${{ inputs.module }}::VERSION, "\n"'
+        $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check ${{ inputs.module }}
 
   test-module-freebsd:
     name: on freebsd ${{ matrix.osvers }}
@@ -180,4 +180,4 @@ jobs:
 
           cpan ${{ inputs.module }}
 
-          perl -M${{ inputs.module }} -e 'print "::notice::Build success for: ${{ inputs.module }} ", $${{ inputs.module }}::VERSION, "\n"'
+          $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check ${{ inputs.module }}
