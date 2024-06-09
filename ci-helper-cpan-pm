@@ -8,7 +8,7 @@ use FindBin;
 use ExtUtils::MakeMaker ();
 use Getopt::Long;
 
-my $home_dir = $ENV{HOME};
+my $home_dir = $^O eq 'MSWin32' ? $ENV{USERPROFILE} : $ENV{HOME};
 my $sysdeps_clone_url = 'https://github.com/eserte/cpan-plugin-sysdeps';
 my $with_sudo = $> != 0;
 my $run_tests = 1;
