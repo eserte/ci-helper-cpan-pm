@@ -41,10 +41,16 @@ jobs:
     - name: check ci-helper-cpan-pm
       run: perl -c $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm
 
+    - name: check if GD version is OK
+      # https://github.com/lstein/Perl-GD/issues/55
+      run: |
+        if grep -sq "VERSION_CODENAME=.*noble" /etc/os-release && zgrep -l RURBAN/GD-2.83.tar.gz ~/.cpan/sources/modules/02packages.details.txt.gz >/dev/null; then echo "SKIP_GD=true" >> $GITHUB_ENV; fi
     - name: install GD
       run: cpan GD
+      if: "!env.SKIP_GD"
     - name: check GD
       run: perl -MGD -e1
+      if: "!env.SKIP_GD"
 
     - name: install File::LibMagic
       run: cpan File::LibMagic
