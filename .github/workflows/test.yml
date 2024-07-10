@@ -41,6 +41,11 @@ jobs:
     - name: check ci-helper-cpan-pm
       run: perl -c $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm
 
+    - name: install File::LibMagic
+      run: cpan File::LibMagic
+    - name: check File::LibMagic
+      run: perl -MFile::LibMagic -e1
+
     - name: check if GD version is OK
       # https://github.com/lstein/Perl-GD/issues/55
       run: |
@@ -51,11 +56,6 @@ jobs:
     - name: check GD
       run: perl -MGD -e1
       if: "!env.SKIP_GD"
-
-    - name: install File::LibMagic
-      run: cpan File::LibMagic
-    - name: check File::LibMagic
-      run: perl -MFile::LibMagic -e1
 
     - name: install Curses
       run: cpan Curses
