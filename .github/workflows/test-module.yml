@@ -29,9 +29,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: 'macos-12'
+          - os: 'macos-13'
             container: ~
           - os: 'macos-14'
+            container: ~
+          - os: 'macos-15'
             container: ~
           - os: 'ubuntu-20.04'
             container: ~
