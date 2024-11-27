@@ -49,6 +49,8 @@ jobs:
             container: fedora:38
           - os: 'ubuntu-latest'
             container: fedora:40
+          - os: 'ubuntu-latest'
+            container: rockylinux:9
           #- os: 'ubuntu-latest'
           ## XXX disable until a mirrorlist replacement is found
           #  container: centos:7
@@ -87,7 +89,7 @@ jobs:
     - name: "rpm-based systems: install perl, CPAN.pm, git..."
       run: |
         yum -y install "perl(CPAN)" "perl(Test::More)" "perl(Parse::CPAN::Meta)" git make gcc patch
-      if: "startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos')"
+      if: "startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos') || startsWith(matrix.container, 'rockylinux')"
 
     - name: "apt-based systems: install perl, CPAN.pm, git, make, cc..."
       run: |
