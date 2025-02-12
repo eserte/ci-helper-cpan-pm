@@ -35,8 +35,8 @@ jobs:
             container: ~
           - os: 'macos-15'
             container: ~
-          - os: 'ubuntu-20.04'
-            container: ~
+          - os: 'ubuntu-latest'
+            container: ubuntu:20.04
           - os: 'ubuntu-22.04'
             container: ~
           - os: 'ubuntu-24.04'
