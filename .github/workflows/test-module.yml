@@ -92,6 +92,8 @@ jobs:
       if: "startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos') || startsWith(matrix.container, 'rockylinux')"
 
     - name: "apt-based systems: install perl, CPAN.pm, git, make, cc..."
+      env:
+        DEBIAN_FRONTEND: noninteractive
       run: |
         apt-get update -yq && apt-get install -yqq perl git make gcc g++
       if: "startsWith(matrix.container, 'debian') || startsWith(matrix.container, 'ubuntu')"
