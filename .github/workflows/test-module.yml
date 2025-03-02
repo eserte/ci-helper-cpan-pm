@@ -141,7 +141,10 @@ jobs:
     - name: cpan-sysdeps dry-run commands
       continue-on-error: true
       run: |
-        cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
+        output=$(cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run 2>&1 | tee /dev/stderr)
+        if echo "$output" | grep -q "apt-get install"; then
+          echo "DEBIAN_FRONTEND=noninteractive" >> "$GITHUB_ENV"
+        fi
     - name: install ${{ inputs.module }}
       run: |
         cpan ${{ inputs.module }}
