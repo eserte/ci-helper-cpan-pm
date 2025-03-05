@@ -60,6 +60,14 @@ sub git_clone ($$;@) {
     if (!$dry_run) {
 	system @cmd;
 	die "Cloning $clone_url to $clone_dest failed" if $? != 0;
+	if ($^O ne 'MSWin32') { # pipe-open problematic on Windows
+	    if (open my $fh, '-|', qw(git -C), $clone_dest, qw(rev-parse HEAD)) {
+		local $/;
+		chomp(my $commit = <$fh>);
+		close $fh;
+		print STDERR "commit: $commit\n";
+	    }
+	}
     }
     print STDERR "done.\n";
 }
@@ -305,4 +313,3 @@ sub is_in_path {
     undef;
 }
 # REPO END
-
