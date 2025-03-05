@@ -48,7 +48,7 @@ jobs:
           - os: 'ubuntu-latest'
             container: fedora:38
           - os: 'ubuntu-latest'
-            container: fedora:40
+            container: fedora:41
           - os: 'ubuntu-latest'
             container: rockylinux:9
           #- os: 'ubuntu-latest'
