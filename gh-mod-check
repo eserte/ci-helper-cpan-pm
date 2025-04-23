@@ -2,6 +2,17 @@
 
 # To be used within a github workflow:
 
+use strict;
+use Getopt::Long;
+
+GetOptions("test-only=s" => \my $test_only)
+    or die "usage?";
+
+if ($test_only eq 'true') {
+    # module was just tested, not installed, so don't do anything
+    exit 0;
+}
+
 my $mod = shift || die "Please specify module to check!";
 if ($mod =~ m{[/.]}) { # looks like a distribution
     if ($mod =~ m{.*/(.*)}) {

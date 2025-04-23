@@ -157,7 +157,7 @@ jobs:
         cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
     - name: check ${{ inputs.module }}
       run: |
-        $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check ${{ inputs.module }}
+        $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}
 
   test-module-windows:
     name: on windows
@@ -195,7 +195,7 @@ jobs:
         cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
     - name: check ${{ inputs.module }}
       run: |
-        $check_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\gh-mod-check ${{ inputs.module }}"
+        $check_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}"
         Write-Host $check_cmd
         Invoke-Expression $check_cmd
 
@@ -242,4 +242,4 @@ jobs:
 
           cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
 
-          $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check ${{ inputs.module }}
+          $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}
