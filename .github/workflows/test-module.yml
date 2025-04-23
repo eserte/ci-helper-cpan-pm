@@ -19,6 +19,9 @@ on:
       sysdeps-branch:
         type: string
         default: master
+      test-only:
+        type: boolean
+        default: false
 
 jobs:
   test-module:
@@ -70,6 +73,9 @@ jobs:
           #  container: alpine:latest
 
     steps:
+    - name: Current workflow inputs
+      run: echo "${{ toJSON(github.event.inputs) }}"
+
     - uses: actions/checkout@v3
       with:
         repository: eserte/ci-helper-cpan-pm
@@ -121,7 +127,7 @@ jobs:
           $sudocmd apt-get remove -y libgd3 nginx
         fi
 
-    - name: before_install
+    - name: before build
       run: |
         distroprefs_opts=
         if [ ${{ inputs.include-distroprefs }} = 'true' ]
@@ -146,9 +152,9 @@ jobs:
         if echo "$output" | grep -q "apt-get install"; then
           echo "DEBIAN_FRONTEND=noninteractive" >> "$GITHUB_ENV"
         fi
-    - name: install ${{ inputs.module }}
+    - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
       run: |
-        cpan ${{ inputs.module }}
+        cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
     - name: check ${{ inputs.module }}
       run: |
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check ${{ inputs.module }}
@@ -157,11 +163,13 @@ jobs:
     name: on windows
     runs-on: windows-latest
     steps:
+    - name: Current workflow inputs
+      run: echo "${{ toJSON(github.event.inputs) }}"
     - uses: actions/checkout@v4
       with:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
-    - name: before_install
+    - name: before build
       run: |
         $distroprefs_opts = ""
         if ("${{ inputs.include-distroprefs }}" -eq "true") {
@@ -182,9 +190,9 @@ jobs:
       continue-on-error: true
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
-    - name: install ${{ inputs.module }}
+    - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
       run: |
-        cpan ${{ inputs.module }}
+        cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
     - name: check ${{ inputs.module }}
       run: |
         $check_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\gh-mod-check ${{ inputs.module }}"
@@ -201,6 +209,9 @@ jobs:
           - osvers: '13.4'
           - osvers: '14.2'
     steps:
+    - name: Current workflow inputs
+      run: echo "${{ toJSON(github.event.inputs) }}"
+
     - uses: actions/checkout@v4
       with:
         repository: eserte/ci-helper-cpan-pm
@@ -229,6 +240,6 @@ jobs:
           set -ex
           $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts
 
-          cpan ${{ inputs.module }}
+          cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
 
           $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check ${{ inputs.module }}
