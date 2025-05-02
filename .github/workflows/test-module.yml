@@ -175,7 +175,7 @@ jobs:
       run: |
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}
     - name: Prepare artifact name
-      if: inputs.enable-cpan-reporter == true
+      if: always() && inputs.enable-cpan-reporter == true
       id: artifact-name
       shell: bash
       run: |
@@ -188,7 +188,7 @@ jobs:
         echo "artifact_name=cpan-test-report-$NAME" >> $GITHUB_OUTPUT
 
     - name: upload CPAN test reports
-      if: inputs.enable-cpan-reporter == true
+      if: always() && inputs.enable-cpan-reporter == true
       uses: actions/upload-artifact@v4
       with:
         name: ${{ steps.artifact-name.outputs.artifact_name }}
@@ -242,11 +242,12 @@ jobs:
         Write-Host $check_cmd
         Invoke-Expression $check_cmd
     - name: Prepare artifact path
+      if: always() && inputs.enable-cpan-reporter == true
       id: artifact-path
       run: |
         echo "userprofile=$env:USERPROFILE" >> $env:GITHUB_OUTPUT
     - name: upload CPAN test reports
-      if: inputs.enable-cpan-reporter == true
+      if: always() && inputs.enable-cpan-reporter == true
       uses: actions/upload-artifact@v4
       with:
         name: cpan-test-report-windows
@@ -307,7 +308,7 @@ jobs:
           $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}
 
     - name: upload CPAN test reports
-      if: inputs.enable-cpan-reporter == true
+      if: always() && inputs.enable-cpan-reporter == true
       uses: actions/upload-artifact@v4
       with:
         name: cpan-test-report-freebsd-${{ matrix.osvers }}
