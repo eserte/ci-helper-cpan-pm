@@ -35,5 +35,6 @@ $CPAN::Config = {
   'scan_cache' => q[never],
 #@CPANVER<2.00@  'tar' => q[/bin/tar],
 #@CPANVER<2.00@  'unzip' => q[/usr/bin/unzip],
+  'test_report' => q[@TEST_REPORT@],
   'yaml_module' => q[@YAML_MODULE@], # YAML.pm may hang on parsing some META.yml files
 };

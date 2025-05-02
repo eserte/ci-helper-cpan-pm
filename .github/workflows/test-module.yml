@@ -13,6 +13,9 @@ on:
       include-sysdeps:
         type: boolean
         default: true
+      enable-cpan-reporter:
+        type: boolean
+        default: false
       distroprefs-branch:
         type: string
         default: master
@@ -20,6 +23,9 @@ on:
         type: string
         default: master
       test-only:
+        type: boolean
+        default: false
+      debug:
         type: boolean
         default: false
 
@@ -139,8 +145,18 @@ jobs:
         then
             sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
         fi
+        cpan_reporter_opts=
+        if [ ${{ inputs.enable-cpan-reporter }} = 'true' ]
+        then
+            cpan_reporter_opts='--enable-cpan-reporter --email-from=${{ github.actor }}@users.noreply.github.com'
+        fi
+        debug_opts=
+        if [ ${{ inputs.debug }} = 'true' ]
+        then
+            debug_opts='--debug'
+        fi
         set -ex
-        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts
+        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
     - name: cpan-sysdeps check
       continue-on-error: true
       run: |
@@ -158,6 +174,25 @@ jobs:
     - name: check ${{ inputs.module }}
       run: |
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}
+    - name: Prepare artifact name
+      if: inputs.enable-cpan-reporter == true
+      id: artifact-name
+      shell: bash
+      run: |
+        if [ -n "${{ matrix.container }}" ]; then
+          NAME="${{ matrix.container }}"
+        else
+          NAME="${{ matrix.os }}"
+        fi
+        NAME="${NAME//:/_}"
+        echo "artifact_name=cpan-test-report-$NAME" >> $GITHUB_OUTPUT
+
+    - name: upload CPAN test reports
+      if: inputs.enable-cpan-reporter == true
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.artifact-name.outputs.artifact_name }}
+        path: ~/var/cpantesters/new/*.rpt
 
   test-module-windows:
     name: on windows
@@ -179,7 +214,15 @@ jobs:
         if ("${{ inputs.include-sysdeps }}" -eq "true") {
             $sysdeps_opts = "--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}"
         }
-        $ci_helper_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts"
+        $cpan_reporter_opts = ""
+        if ("${{ inputs.enable-cpan-reporter }}" -eq "true") {
+            $cpan_reporter_opts = "--enable-cpan-reporter --email-from=${{ github.actor }}@users.noreply.github.com"
+        }
+        $debug_opts = ""
+        if ("${{ inputs.debug }}" -eq "true") {
+            $debug_opts = "--debug"
+        }
+        $ci_helper_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts"
         Write-Host $ci_helper_cmd
         Invoke-Expression $ci_helper_cmd
     - name: cpan-sysdeps check
@@ -198,6 +241,16 @@ jobs:
         $check_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}"
         Write-Host $check_cmd
         Invoke-Expression $check_cmd
+    - name: Prepare artifact path
+      id: artifact-path
+      run: |
+        echo "userprofile=$env:USERPROFILE" >> $env:GITHUB_OUTPUT
+    - name: upload CPAN test reports
+      if: inputs.enable-cpan-reporter == true
+      uses: actions/upload-artifact@v4
+      with:
+        name: cpan-test-report-windows
+        path: ${{ steps.artifact-path.outputs.userprofile }}\\var\\cpantesters\\new\\*.rpt
 
   test-module-freebsd:
     name: on freebsd ${{ matrix.osvers }}
@@ -222,7 +275,6 @@ jobs:
         operating_system: freebsd
         version: '${{ matrix.osvers }}'
         shell: bash
-        sync_files: runner-to-vm
         run: |
           sudo pkg update
           sudo pkg install -y perl5 git
@@ -237,9 +289,26 @@ jobs:
           then
               sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
           fi
+          cpan_reporter_opts=
+          if [ ${{ inputs.enable-cpan-reporter }} = 'true' ]
+          then
+              cpan_reporter_opts='--enable-cpan-reporter --email-from=${{ github.actor }}@users.noreply.github.com'
+          fi
+          debug_opts=
+          if [ ${{ inputs.debug }} = 'true' ]
+          then
+              debug_opts='--debug'
+          fi
           set -ex
-          $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts
+          $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test --reports-dir=$HOME/work/var/cpantesters/new $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
 
           cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
 
           $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}
+
+    - name: upload CPAN test reports
+      if: inputs.enable-cpan-reporter == true
+      uses: actions/upload-artifact@v4
+      with:
+        name: cpan-test-report-freebsd-${{ matrix.osvers }}
+        path: ~/work/var/cpantesters/new/*.rpt

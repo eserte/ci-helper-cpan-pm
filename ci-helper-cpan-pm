@@ -15,6 +15,7 @@ my $run_tests = 1;
 my @urllist;
 my @default_urllist = qw(http://cpan.metacpan.org/ http://cpan.cpantesters.org/ http://cpan.develooper.com/ ftp://ftp.funet.fi/pub/CPAN);
 my $yaml_module = 'YAML';
+my $reports_dir = "$home_dir/var/cpantesters/new"; # will be created if missing and needed
 
 sub usage () {
     die <<EOF;
@@ -22,6 +23,8 @@ usage: $0 [--no-sudo] [--no-test] [--dry-run] [--debug]
 	[--home-dir=directory]
 	[--distroprefs=git-clone-url] [--distroprefs-branch ...]
 	[--enable-sysdeps] [--sysdeps-branch ...]
+	[--enable-cpan-reporter]
+	[--email-from mail]
 	[--yaml-module ...] [--mirrorurl=url ...]
 EOF
 }
@@ -34,6 +37,9 @@ GetOptions
      'distroprefs-branch=s' => \my $distroprefs_branch,
      'enable-sysdeps'       => \my $enable_sysdeps,
      'sysdeps-branch=s'     => \my $sysdeps_branch,
+     'enable-cpan-reporter' => \my $enable_cpan_reporter,
+     'email-from=s'         => \my $email_from,
+     'reports-dir=s'        =>    \$reports_dir,
      'sudo!'                =>    \$with_sudo,
      'test!'                =>    \$run_tests,
      'mirrorurl=s@'         =>    \@urllist,
@@ -104,6 +110,8 @@ my $cpan_pm_version = do {
     MM->parse_version($cpan_pm_path);
 };
 
+$enable_cpan_reporter = $enable_cpan_reporter ? 1 : 0; # make sure to use 1 or 0, for CPAN/MyConfig.pm
+
 my $CPAN_dir = "$home_dir/.cpan/CPAN";
 create_dir $CPAN_dir;
 
@@ -138,6 +146,7 @@ if (!-e $MyConfig_file) {
 	s{\@URLLIST\@}{$urllist_formatted}g;
 	s{\@PLUGIN_LIST\@}{$plugin_list_formatted}g;
 	s{\@YAML_MODULE\@}{$yaml_module}g;
+	s{\@TEST_REPORT\@}{$enable_cpan_reporter}g;
 	print $ofh $_;
     }
     close $ofh
@@ -187,6 +196,39 @@ if ($enable_sysdeps) {
 	print STDERR "Need to upgrade CPAN.pm...\n"; 
 	cpan_mod_install 'CPAN';
     }
+}
+if ($enable_cpan_reporter) {
+    create_dir "$home_dir/.cpanreporter";
+    create_dir $reports_dir;
+    my $config_file = "$home_dir/.cpanreporter/config.ini";
+
+    if (-e $config_file) {
+	require POSIX;
+	require File::Copy;
+	my $backup_config_file = $config_file . POSIX::strftime(".%Y%m%d_%H%M%S.bak", localtime);
+	warn "Found existing $config_file, will create a backup $backup_config_file...\n";
+	File::Copy::copy($config_file, $backup_config_file)
+	    or die "Create a copy $backup_config_file failed: $!";
+    }
+
+    my $used_email_from = $email_from || 'anonymous@example.org';
+    my $config_contents = <<EOF;
+edit_report=default:no
+send_report=default:yes
+transport=File $reports_dir
+email_from=$used_email_from
+EOF
+    open my $ofh, '>', $config_file
+	or die "Can't write to $config_file: $!";
+    print $ofh $config_contents;
+    close $ofh
+	or die "Error writing $config_file: $!";
+    if ($debug) {
+	print STDERR "Contents of $config_file:\n$config_contents\n";
+    }
+
+    my @toolchain_modules = qw(Term::ReadKey Expect Term::ReadLine::Perl Devel::Hide CPAN::Reporter); # list taken from setup-new-smoker-perl.pl
+    cpan_mod_install @toolchain_modules;
 }
 
 if (!eval qq{ require $yaml_module; 1 }) {
