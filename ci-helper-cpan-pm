@@ -10,12 +10,14 @@ use Getopt::Long;
 
 my $home_dir = $^O eq 'MSWin32' ? $ENV{USERPROFILE} : $ENV{HOME};
 my $sysdeps_clone_url = 'https://github.com/eserte/cpan-plugin-sysdeps';
+my $ghactionlog_clone_url = 'https://github.com/eserte/CPAN-Plugin-GHActionLog.git';
 my $with_sudo = $> != 0;
 my $run_tests = 1;
 my @urllist;
 my @default_urllist = qw(http://cpan.metacpan.org/ http://cpan.cpantesters.org/ http://cpan.develooper.com/ ftp://ftp.funet.fi/pub/CPAN);
 my $yaml_module = 'YAML';
 my $reports_dir = "$home_dir/var/cpantesters/new"; # will be created if missing and needed
+my $upgrade_cpan_done = 0;
 
 sub usage () {
     die <<EOF;
@@ -40,6 +42,8 @@ GetOptions
      'enable-cpan-reporter' => \my $enable_cpan_reporter,
      'email-from=s'         => \my $email_from,
      'reports-dir=s'        =>    \$reports_dir,
+     'enable-ghactionlog'   => \my $enable_ghactionlog,
+     'ghactionlog-branch=s' => \my $ghactionlog_branch,
      'sudo!'                =>    \$with_sudo,
      'test!'                =>    \$run_tests,
      'mirrorurl=s@'         =>    \@urllist,
@@ -89,6 +93,35 @@ sub cpan_mod_install (@) {
     print STDERR "done.\n";
 }
 
+sub maybe_upgrade_cpan () {
+    return if !$upgrade_cpan_done;
+
+    # CPAN.pm 2.07 is the first one with plugin support
+    if (!eval { require CPAN; CPAN->VERSION("2.07") }) {
+	print STDERR "Need to upgrade CPAN.pm...\n"; 
+	cpan_mod_install 'CPAN';
+	$upgrade_cpan_done = 1;
+    }
+}
+
+sub fs_mod_install () {
+    # assume already in correct cwd
+    if (!$dry_run) {
+	system $^X, 'Makefile.PL';
+	die "Makefile.PL failed" if $? != 0;
+	system 'make', 'all', ($run_tests ? 'test' : ());
+	die "build/test failed" if $? != 0;
+	{
+	    my @cmd = qw(make install);
+	    if ($with_sudo) {
+		unshift @cmd, 'sudo';
+	    }
+	    system @cmd;
+	    die "'@cmd' failed" if $? != 0;
+	}
+    }
+}
+
 if (!@urllist) {
     @urllist = @default_urllist;
 }
@@ -97,6 +130,9 @@ my $urllist_formatted = join(", ", map { "q[$_]" } @urllist);
 my @plugin_list;
 if ($enable_sysdeps) {
     push @plugin_list, q[CPAN::Plugin::Sysdeps=batch];
+}
+if ($enable_ghactionlog) {
+    push @plugin_list, q[CPAN::Plugin::GHActionLog];
 }
 my $plugin_list_formatted = join(", ", map { "q[$_]" } @plugin_list);
 
@@ -173,29 +209,12 @@ if ($enable_sysdeps) {
     chdir "$home_dir/src/cpan-plugin-sysdeps"
 	or die "Can't chdir to $home_dir/src/cpan-plugin-sysdeps: $!";
     print STDERR "Install cpan-plugin-sysdeps... ";
-    if (!$dry_run) {
-	system $^X, 'Makefile.PL';
-	die "Makefile.PL failed" if $? != 0;
-	system 'make', 'all', ($run_tests ? 'test' : ());
-	die "build/test failed" if $? != 0;
-	{
-	    my @cmd = qw(make install);
-	    if ($with_sudo) {
-		unshift @cmd, 'sudo';
-	    }
-	    system @cmd;
-	    die "'@cmd' failed" if $? != 0;
-	}
-    }
+    fs_mod_install;
     print STDERR "done.\n";
     chdir $cwd
 	or die $!;
 
-    # CPAN.pm 2.07 is the first one with plugin support
-    if (!eval { require CPAN; CPAN->VERSION("2.07") }) {
-	print STDERR "Need to upgrade CPAN.pm...\n"; 
-	cpan_mod_install 'CPAN';
-    }
+    maybe_upgrade_cpan;
 }
 if ($enable_cpan_reporter) {
     create_dir "$home_dir/.cpanreporter";
@@ -229,6 +248,20 @@ EOF
 
     my @toolchain_modules = qw(Term::ReadKey Expect Term::ReadLine::Perl Devel::Hide CPAN::Reporter); # list taken from setup-new-smoker-perl.pl
     cpan_mod_install @toolchain_modules;
+}
+if ($enable_ghactionlog) {
+    create_dir "$home_dir/src";
+    git_clone $ghactionlog_clone_url, "$home_dir/src/CPAN-Plugin-GHActionLog", branch => $ghactionlog_branch;
+    my $cwd = getcwd;
+    chdir "$home_dir/src/CPAN-Plugin-GHActionLog"
+	or die "Can't chdir to $home_dir/src/CPAN-Plugin-GHActionLog: $!";
+    print STDERR "Install CPAN-Plugin-GHActionLog... ";
+    fs_mod_install;
+    print STDERR "done.\n";
+    chdir $cwd
+	or die $!;
+
+    maybe_upgrade_cpan;
 }
 
 if (!eval qq{ require $yaml_module; 1 }) {

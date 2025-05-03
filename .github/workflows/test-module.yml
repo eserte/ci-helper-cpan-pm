@@ -156,7 +156,7 @@ jobs:
             debug_opts='--debug'
         fi
         set -ex
-        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
+        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test --enable-ghactionlog $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
     - name: cpan-sysdeps check
       continue-on-error: true
       run: |
@@ -222,7 +222,7 @@ jobs:
         if ("${{ inputs.debug }}" -eq "true") {
             $debug_opts = "--debug"
         }
-        $ci_helper_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts"
+        $ci_helper_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\ci-helper-cpan-pm --no-test --enable-ghactionlog $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts"
         Write-Host $ci_helper_cmd
         Invoke-Expression $ci_helper_cmd
     - name: cpan-sysdeps check
@@ -301,7 +301,7 @@ jobs:
               debug_opts='--debug'
           fi
           set -ex
-          $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test --reports-dir=$HOME/work/var/cpantesters/new $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
+          $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test --enable-ghactionlog --reports-dir=$HOME/work/var/cpantesters/new $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
 
           cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
 
