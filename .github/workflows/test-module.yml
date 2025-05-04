@@ -254,14 +254,18 @@ jobs:
         path: ${{ steps.artifact-path.outputs.userprofile }}\\var\\cpantesters\\new\\*.rpt
 
   test-module-freebsd:
-    name: on freebsd ${{ matrix.osvers }}
+    name: on freebsd ${{ matrix.osvers }} ${{ matrix.architecture }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         include:
-          - osvers: '13.4'
           - osvers: '14.2'
+            architecture: 'x86-64'
+          - osvers: '14.2'
+            architecture: 'arm64'
+          - osvers: '13.5'
+            architecture: 'x86-64'
     steps:
     - name: Current workflow inputs
       run: echo "${{ toJSON(github.event.inputs) }}"
@@ -271,10 +275,11 @@ jobs:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
 
-    - uses: cross-platform-actions/action@v0.26.0
+    - uses: cross-platform-actions/action@v0.27.0
       with:
-        operating_system: freebsd
-        version: '${{ matrix.osvers }}'
+        operating_system: 'freebsd'
+        version:          '${{ matrix.osvers }}'
+        architecture:     '${{ matrix.architecture }}'
         shell: bash
         run: |
           sudo pkg update
