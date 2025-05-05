@@ -262,8 +262,9 @@ jobs:
         include:
           - osvers: '14.2'
             architecture: 'x86-64'
-          - osvers: '14.2'
-            architecture: 'arm64'
+## XXX works, but is too slow --- maybe enable with a new "slow and obscure configurations" switch
+#          - osvers: '14.2'
+#            architecture: 'arm64'
           - osvers: '13.4'
             architecture: 'x86-64'
     steps:
