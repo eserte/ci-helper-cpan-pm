@@ -264,7 +264,7 @@ jobs:
             architecture: 'x86-64'
           - osvers: '14.2'
             architecture: 'arm64'
-          - osvers: '13.5'
+          - osvers: '13.4'
             architecture: 'x86-64'
     steps:
     - name: Current workflow inputs
