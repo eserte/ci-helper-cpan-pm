@@ -316,5 +316,5 @@ jobs:
       if: always() && inputs.enable-cpan-reporter == true
       uses: actions/upload-artifact@v4
       with:
-        name: cpan-test-report-freebsd-${{ matrix.osvers }}
+        name: cpan-test-report-freebsd-${{ matrix.osvers }}-${{ matrix.architecture }}
         path: ~/work/var/cpantesters/new/*.rpt
