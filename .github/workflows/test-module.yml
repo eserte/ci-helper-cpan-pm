@@ -254,18 +254,27 @@ jobs:
         path: ${{ steps.artifact-path.outputs.userprofile }}\\var\\cpantesters\\new\\*.rpt
 
   test-module-freebsd:
-    name: on freebsd ${{ matrix.osvers }} ${{ matrix.architecture }}
+    name: on ${{ matrix.operating_system }} ${{ matrix.osvers }} ${{ matrix.architecture }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         include:
-          - osvers: '14.2'
+          - operating_system: freebsd
+            osvers: '14.2'
             architecture: 'x86-64'
 ## XXX works, but is too slow --- maybe enable with a new "slow and obscure configurations" switch
-#          - osvers: '14.2'
+#          - operating_system: freebsd
+#            osvers: '14.2'
 #            architecture: 'arm64'
-          - osvers: '13.4'
+          - operating_system: freebsd
+            osvers: '13.4'
+            architecture: 'x86-64'
+          - operating_system: openbsd
+            osvers: '7.6'
+            architecture: 'x86-64'
+          - operating_system: netbsd
+            osvers: '10.1'
             architecture: 'x86-64'
     steps:
     - name: Current workflow inputs
@@ -278,13 +287,39 @@ jobs:
 
     - uses: cross-platform-actions/action@v0.27.0
       with:
-        operating_system: 'freebsd'
+        operating_system: '${{ matrix.operating_system }}'
         version:          '${{ matrix.osvers }}'
         architecture:     '${{ matrix.architecture }}'
         shell: bash
         run: |
-          sudo pkg update
-          sudo pkg install -y perl5 git
+          has_sysdeps_support=no
+          case "${{ matrix.operating_system }}" in
+            freebsd)
+              sudo pkg update
+              sudo pkg install -y perl5 git
+              has_sysdeps_support=yes
+              ;;
+            openbsd)
+              # Update packages and install with pkg_add
+              sudo pkg_add -u
+              sudo pkg_add perl git
+              has_sysdeps_support=yes
+              ;;
+            netbsd)
+              # Install using pkgin or pkg_add (depending on system setup)
+              if command -v pkgin >/dev/null 2>&1; then
+                sudo pkgin -y update
+                sudo pkgin -y install perl git
+              else
+                sudo pkg_add perl git
+              fi
+              has_sysdeps_support=no
+              ;;
+            *)
+              echo "Unsupported OS: ${{ matrix.operating_system }}"
+              exit 1
+              ;;
+          esac
 
           distroprefs_opts=
           if [ ${{ inputs.include-distroprefs }} = 'true' ]
@@ -294,7 +329,12 @@ jobs:
           sysdeps_opts=
           if [ ${{ inputs.include-sysdeps }} = 'true' ]
           then
-              sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
+              if [ "$has_sysdeps_support" = "yes" ]
+              then
+                  sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
+              else
+                  echo "Turning off sysdeps option. No support for operating system ${{ matrix.operating_system }}"
+              fi
           fi
           cpan_reporter_opts=
           if [ ${{ inputs.enable-cpan-reporter }} = 'true' ]
@@ -317,5 +357,5 @@ jobs:
       if: always() && inputs.enable-cpan-reporter == true
       uses: actions/upload-artifact@v4
       with:
-        name: cpan-test-report-freebsd-${{ matrix.osvers }}-${{ matrix.architecture }}
+        name: cpan-test-report-${{ matrix.operating_system }}-${{ matrix.osvers }}-${{ matrix.architecture }}
         path: ~/work/var/cpantesters/new/*.rpt
