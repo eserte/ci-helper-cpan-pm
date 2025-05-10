@@ -292,6 +292,8 @@ jobs:
         architecture:     '${{ matrix.architecture }}'
         shell: bash
         run: |
+          echo "::group::Install basic system prereqs (perl...)"
+
           has_sysdeps_support=no
           case "${{ matrix.operating_system }}" in
             freebsd)
@@ -321,6 +323,8 @@ jobs:
               ;;
           esac
 
+          echo "::group::Setup CPAN environment"
+
           distroprefs_opts=
           if [ ${{ inputs.include-distroprefs }} = 'true' ]
           then
@@ -348,6 +352,8 @@ jobs:
           fi
           set -ex
           $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test --reports-dir=$HOME/work/var/cpantesters/new $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
+
+          echo "::group::Build and test module"
 
           cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
 
