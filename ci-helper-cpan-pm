@@ -104,6 +104,27 @@ my $sudo_formatted = $with_sudo ? 'sudo ' : '';
 
 my $build_cmd = $^O eq 'MSWin32' ? is_in_path('perl') . ' .\Build' : './Build';
 
+my $patch_cmd;
+if (is_in_path('patch')) {
+    $patch_cmd = is_in_path('patch');
+} else {
+    for my $candidate (
+	($^O eq 'MSWin32' ? 'C:/Program Files/Git/usr/bin/patch.exe' : ()),
+	'/usr/bin/patch',
+    ) {
+	if (-x $candidate) {
+	    $patch_cmd = $candidate;
+	    last;
+	}
+    }
+}
+if (!defined $patch_cmd) {
+    if ($distro_prefs_clone_url) {
+	warn "WARN: cannot find 'patch' command; distroprefs files with patches won't probably work.\n";
+    }
+    $patch_cmd = ''; # avoid warnings
+}
+
 my $cpan_pm_version = do {
     my $cpan_pm_path = module_path("CPAN");
     die "Unexpected: cannot find path to CPAN.pm. Current \@INC is: @INC" if !$cpan_pm_path;
@@ -144,6 +165,7 @@ if (!-e $MyConfig_file) {
 	s{\@SUDO_\@}{$sudo_formatted}g;
 	s{\@BUILD_CMD\@}{$build_cmd}g;
 	s{\@URLLIST\@}{$urllist_formatted}g;
+	s{\@PATCH_CMD\@}{$patch_cmd}g;
 	s{\@PLUGIN_LIST\@}{$plugin_list_formatted}g;
 	s{\@YAML_MODULE\@}{$yaml_module}g;
 	s{\@TEST_REPORT\@}{$enable_cpan_reporter}g;
