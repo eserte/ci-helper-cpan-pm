@@ -98,9 +98,23 @@ jobs:
         yum -y install epel-release
       if: "startsWith(matrix.container, 'centos')"
 
+    - name: "Rocky Linux: Clean and update repositories"
+      run: |
+        dnf clean all
+        rm -rf /var/cache/yum
+        dnf update -y
+      if: "startsWith(matrix.container, 'rockylinux')"
+
+    - name: "Rocky Linux: Enable CRB repository"
+      run: |
+        dnf install -y dnf-plugins-core
+        dnf config-manager --set-enabled crb
+      if: "startsWith(matrix.container, 'rockylinux')"
+
     - name: "rpm-based systems: install perl, CPAN.pm, git..."
       run: |
-        yum -y install "perl(CPAN)" "perl(Test::More)" "perl(Parse::CPAN::Meta)" git make gcc patch
+        dnf -y install "perl(CPAN)" "perl(Test::More)" "perl(Parse::CPAN::Meta)" \
+          git make gcc patch glibc-devel
       if: "startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos') || startsWith(matrix.container, 'rockylinux')"
 
     - name: "apt-based systems: install perl, CPAN.pm, git, make, cc..."
