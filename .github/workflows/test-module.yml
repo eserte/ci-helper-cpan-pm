@@ -280,10 +280,10 @@ jobs:
 #            osvers: '14.2'
 #            architecture: 'arm64'
           - operating_system: freebsd
-            osvers: '13.4'
+            osvers: '13.5'
             architecture: 'x86-64'
           - operating_system: openbsd
-            osvers: '7.6'
+            osvers: '7.7'
             architecture: 'x86-64'
           - operating_system: netbsd
             osvers: '10.1'
@@ -297,7 +297,7 @@ jobs:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
 
-    - uses: cross-platform-actions/action@v0.27.0
+    - uses: cross-platform-actions/action@v0.28.0
       with:
         operating_system: '${{ matrix.operating_system }}'
         version:          '${{ matrix.osvers }}'
