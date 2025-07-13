@@ -63,7 +63,7 @@ jobs:
           #- os: 'ubuntu-latest'
           ## XXX disable until a mirrorlist replacement is found
           #  container: centos:7
-          ## XXX needs more work
+          ## XXX needs more work (replacement for checkout action)
           #- os: 'ubuntu-latest'
           #  container: debian:stretch
           - os: 'ubuntu-latest'
@@ -82,16 +82,29 @@ jobs:
     - name: Current workflow inputs
       run: echo "${{ toJSON(github.event.inputs) }}"
 
+    # Run early because some actions may depend on installing packages
+    - name: "Fix sources.list for archived Debian releases"
+      run: |
+        codename="$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2)"
+        if [ "$codename" = "buster" ] || [ "$codename" = "stretch" ]; then
+          cat > /etc/apt/sources.list <<EOF
+        deb http://archive.debian.org/debian $codename main contrib non-free
+        deb http://archive.debian.org/debian-security $codename/updates main contrib non-free
+        EOF
+          rm -f /etc/apt/sources.list.d/*
+          echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+        fi
+
     - uses: actions/checkout@v3
       with:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
-      if: matrix.container == 'centos:7'
+      if: matrix.container == 'centos:7' || matrix.container == 'debian:stretch'
     - uses: actions/checkout@v4
       with:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
-      if: matrix.container != 'centos:7'
+      if: matrix.container != 'centos:7' && matrix.container != 'debian:stretch'
 
     - name: "CentOS: install epel"
       run: |
