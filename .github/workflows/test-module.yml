@@ -44,6 +44,9 @@ jobs:
             container: ~
           - os: 'macos-15'
             container: ~
+          ## XXX as of 2025-07-13: does not start at all
+          #- os: 'macOS-15-arm64'
+          #  container: ~
           - os: 'ubuntu-latest'
             container: ubuntu:20.04
           - os: 'ubuntu-22.04'
@@ -53,6 +56,9 @@ jobs:
           # another ubuntu as a container, not runner
           - os: 'ubuntu-latest'
             container: ubuntu:24.04
+          ## XXX as of 2025-07-13: does not start at all
+          #- os: 'ubuntu-24.04-arm64'
+          #  container: ~
           # fedora: use the minimum and maximum supported versions
           - os: 'ubuntu-latest'
             container: fedora:38
