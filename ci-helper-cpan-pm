@@ -96,7 +96,11 @@ my $urllist_formatted = join(", ", map { "q[$_]" } @urllist);
 
 my @plugin_list;
 if ($enable_sysdeps) {
-    push @plugin_list, q[CPAN::Plugin::Sysdeps=batch];
+    my @plugin_args = ('batch');
+    if ($debug) {
+	push @plugin_args, 'debug';
+    }
+    push @plugin_list, q[CPAN::Plugin::Sysdeps=] . join(',', @plugin_args);
 }
 my $plugin_list_formatted = join(", ", map { "q[$_]" } @plugin_list);
 
