@@ -256,6 +256,10 @@ jobs:
         $ci_helper_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts"
         Write-Host $ci_helper_cmd
         Invoke-Expression $ci_helper_cmd
+    - name: prepend Strawberry Perl to PATH
+      run: |
+        echo "C:\Strawberry\c\bin;C:\Strawberry\perl\site\bin;C:\Strawberry\perl\bin;$env:PATH" > $env:GITHUB_PATH
+      shell: powershell
     - name: cpan-sysdeps check
       continue-on-error: true
       run: |
