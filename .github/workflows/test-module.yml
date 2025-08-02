@@ -292,7 +292,7 @@ jobs:
       matrix:
         include:
           - operating_system: freebsd
-            osvers: '14.2'
+            osvers: '14.3'
             architecture: 'x86-64'
 ## XXX works, but is too slow --- maybe enable with a new "slow and obscure configurations" switch
 #          - operating_system: freebsd
@@ -316,7 +316,7 @@ jobs:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
 
-    - uses: cross-platform-actions/action@v0.28.0
+    - uses: cross-platform-actions/action@v0.29.0
       with:
         operating_system: '${{ matrix.operating_system }}'
         version:          '${{ matrix.osvers }}'
