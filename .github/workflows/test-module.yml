@@ -383,9 +383,23 @@ jobs:
           fi
           set -ex
           $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test --reports-dir=$HOME/work/var/cpantesters/new $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
+          set +x
+
+          if [ "$sysdeps_opts" != '' ]
+          then
+              set +e
+
+              echo "::group::cpan-sysdeps check"
+              cpan-sysdeps --cpanmod ${{ inputs.module }}
+
+              echo "::group::cpan-sysdeps dry-run commands"
+              cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
+
+              set -e
+          fi
 
           echo "::group::Build and test module"
-
+          set -x
           cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
 
           $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}
