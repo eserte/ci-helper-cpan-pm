@@ -291,7 +291,7 @@ jobs:
       if: always() && inputs.enable-cpan-reporter == true
       uses: actions/upload-artifact@v4
       with:
-        name: cpan-test-report-windows
+        name: cpan-test-report-${{ matrix.os }}
         path: ${{ steps.artifact-path.outputs.userprofile }}\\var\\cpantesters\\new\\*.rpt
 
   test-module-freebsd:
