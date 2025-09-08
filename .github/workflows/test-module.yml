@@ -226,8 +226,14 @@ jobs:
         path: ~/var/cpantesters/new/*.rpt
 
   test-module-windows:
-    name: on windows
-    runs-on: windows-latest
+    name: on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: 'windows-2022'
+          - os: 'windows-2025'
     steps:
     - name: Current workflow inputs
       run: echo "${{ toJSON(github.event.inputs) }}"
