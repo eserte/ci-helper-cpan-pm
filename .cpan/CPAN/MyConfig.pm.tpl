@@ -32,6 +32,7 @@ $CPAN::Config = {
   'plugin_list' => [@PLUGIN_LIST@],
   'prefs_dir' => q[@HOME@/.cpan/prefs],
   'prerequisites_policy' => q[follow],
+  'pushy_https' => q[0],
   'scan_cache' => q[never],
 #@CPANVER<2.00@  'tar' => q[/bin/tar],
 #@CPANVER<2.00@  'unzip' => q[/usr/bin/unzip],
