@@ -13,7 +13,7 @@ my $sysdeps_clone_url = 'https://github.com/eserte/cpan-plugin-sysdeps';
 my $with_sudo = $> != 0;
 my $run_tests = 1;
 my @urllist;
-my @default_urllist = qw(http://cpan.metacpan.org/ http://cpan.cpantesters.org/ http://cpan.develooper.com/ ftp://ftp.funet.fi/pub/CPAN);
+my @default_urllist = qw(http://cpan.metacpan.org/ http://www.cpan.org/ http://cpan.cpantesters.org/ ftp://ftp.funet.fi/pub/CPAN);
 my $yaml_module = 'YAML';
 my $reports_dir = "$home_dir/var/cpantesters/new"; # will be created if missing and needed
 
