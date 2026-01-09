@@ -48,7 +48,7 @@ jobs:
     - name: check if GD version is OK
       # https://github.com/lstein/Perl-GD/issues/55
       run: |
-        if grep -sq "VERSION_CODENAME=.*noble" /etc/os-release && zgrep -l RURBAN/GD-2.83.tar.gz ~/.cpan/sources/modules/02packages.details.txt.gz >/dev/null; then echo "SKIP_GD=true" >> $GITHUB_ENV; fi
+        if grep -sq "VERSION_CODENAME=.*noble" /etc/os-release && zgrep -P -l 'RURBAN/GD-2.(83|84).tar.gz' ~/.cpan/sources/modules/02packages.details.txt.gz >/dev/null; then echo "SKIP_GD=true" >> $GITHUB_ENV; fi
     - name: install GD
       run: cpan GD
       if: "!env.SKIP_GD"
