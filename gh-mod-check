@@ -14,7 +14,16 @@ if ($test_only eq 'true') {
 }
 
 my $mod = shift || die "Please specify module to check!";
-if ($mod =~ m{[/.]}) { # looks like a distribution
+# first check for some well-known distributions where it's not possible to deduce the (primary or any) module XXX could use Parse::CPAN::Packages::Fast if available?
+if      ($mod =~ m{/libintl-perl-\d}) {
+    $mod = 'Locale::Util';
+} elsif ($mod =~ m{/libwww-perl-\d}) {
+    $mod = 'LWP';
+} elsif ($mod =~ m{/libxml-perl-\d}) {
+    $mod = 'XML::SAX2Perl';
+} elsif ($mod =~ m{/libnet-\d}) {
+    $mod = 'Net::SMTP';
+} elsif ($mod =~ m{[/.]}) { # looks like a distribution
     if ($mod =~ m{.*/(.*)}) {
 	$mod = $1; # basename
     }
