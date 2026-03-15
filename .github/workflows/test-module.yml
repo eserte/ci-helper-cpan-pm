@@ -104,7 +104,7 @@ jobs:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
       if: matrix.container == 'centos:7' || matrix.container == 'debian:stretch'
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
@@ -218,7 +218,7 @@ jobs:
 
     - name: upload CPAN test reports
       if: always() && inputs.enable-cpan-reporter == true
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact-name.outputs.artifact_name }}
         path: ~/var/cpantesters/new/*.rpt
@@ -235,7 +235,7 @@ jobs:
     steps:
     - name: Current workflow inputs
       run: echo "${{ toJSON(github.event.inputs) }}"
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
@@ -287,7 +287,7 @@ jobs:
         echo "userprofile=$env:USERPROFILE" >> $env:GITHUB_OUTPUT
     - name: upload CPAN test reports
       if: always() && inputs.enable-cpan-reporter == true
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: cpan-test-report-${{ matrix.os }}
         path: ${{ steps.artifact-path.outputs.userprofile }}\\var\\cpantesters\\new\\*.rpt
@@ -322,7 +322,7 @@ jobs:
     - name: Current workflow inputs
       run: echo "${{ toJSON(github.event.inputs) }}"
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
@@ -417,7 +417,7 @@ jobs:
 
     - name: upload CPAN test reports
       if: always() && inputs.enable-cpan-reporter == true
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: cpan-test-report-${{ matrix.operating_system }}-${{ matrix.osvers }}-${{ matrix.architecture }}
         path: ~/work/var/cpantesters/new/*.rpt
