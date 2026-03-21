@@ -205,14 +205,14 @@ jobs:
     - name: Prepare artifact name
       if: always() && inputs.enable-cpan-reporter == true
       id: artifact-name
-      shell: bash
+      shell: sh
       run: |
         if [ -n "${{ matrix.container }}" ]; then
           NAME="${{ matrix.container }}"
         else
           NAME="${{ matrix.os }}"
         fi
-        NAME="${NAME//:/_}"
+        NAME=$(echo "$NAME" | tr ':' '_')
         echo "artifact_name=cpan-test-report-$NAME" >> $GITHUB_OUTPUT
 
     - name: upload CPAN test reports
