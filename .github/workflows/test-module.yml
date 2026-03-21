@@ -78,9 +78,8 @@ jobs:
             container: debian:bookworm
           - os: 'ubuntu-latest'
             container: debian:trixie
-          ## XXX would work if CPAN::Plugin::Sysdeps had alpine support
-          #- os: 'ubuntu-latest'
-          #  container: alpine:latest
+          - os: 'ubuntu-latest'
+            container: alpine:3.21
 
     steps:
     - name: Current workflow inputs
@@ -89,7 +88,7 @@ jobs:
     # Run early because some actions may depend on installing packages
     - name: "Fix sources.list for archived Debian releases"
       run: |
-        codename="$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2)"
+        codename="$(grep VERSION_CODENAME /etc/os-release 2>/dev/null | cut -d= -f2 || true)"
         if [ "$codename" = "buster" ] || [ "$codename" = "stretch" ]; then
           cat > /etc/apt/sources.list <<EOF
         deb http://archive.debian.org/debian $codename main contrib non-free
@@ -145,7 +144,7 @@ jobs:
 
     - name: "apk-based systems: install perl, CPAN.pm, git..."
       run: |
-        apk update -q && apk add -q perl perl-utils git make gcc
+        apk update -q && apk add -q perl perl-utils git make gcc musl-dev wget patch
       if: "startsWith(matrix.container, 'alpine')"
 
     - name: "perlbrew-based systems: add Perl executable path to GITHUB_PATH"
