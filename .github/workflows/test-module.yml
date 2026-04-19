@@ -79,7 +79,7 @@ jobs:
           - os: 'ubuntu-latest'
             container: debian:trixie
           - os: 'ubuntu-latest'
-            container: alpine:3.21
+            container: alpine:3.23
 
     steps:
     - name: Current workflow inputs
