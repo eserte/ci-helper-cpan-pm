@@ -144,7 +144,7 @@ jobs:
 
     - name: "apk-based systems: install perl, CPAN.pm, git..."
       run: |
-        apk update -q && apk add -q perl perl-dev perl-utils git make gcc musl-dev wget patch
+        apk update -q && apk add -q perl perl-dev perl-utils git build-base wget patch
       if: "startsWith(matrix.container, 'alpine')"
 
     - name: "perlbrew-based systems: add Perl executable path to GITHUB_PATH"
