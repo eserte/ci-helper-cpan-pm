@@ -1,0 +1,47 @@
+#!/usr/bin/env perl
+
+# To be used within a github workflow:
+
+use strict;
+use warnings;
+use File::Temp qw(tempdir);
+
+sub set_github_env ($$) {
+    my($key, $value) = @_;
+
+    die "Unexpected: GITHUB_ENV variable not set. Are you running in a GitHub workflow?"
+	if !$ENV{GITHUB_ENV};
+
+    open my $fh, '>>', $ENV{GITHUB_ENV}
+        or die "Cannot write to '$ENV{GITHUB_ENV}': $!";
+    print $fh "$key=$value\n";
+    close $fh or die $!;
+}
+
+my $module = $ENV{INPUTS_MODULE};
+if (!defined $module || $module eq '') {
+    die 'Mandatory environment variable INPUTS_MODULE not set. Please set env.INPUTS_MODULE: ${{ inputs.module }} in your workflow.'."\n";
+}
+my $git_url = defined $ENV{INPUTS_GIT_URL} && $ENV{INPUTS_GIT_URL} ne '' ? $ENV{INPUTS_GIT_URL} : undef;
+
+if (defined $git_url) {
+    my $dir = tempdir("gh-handle-inputs-XXXXXXXX", TMPDIR => 1, CLEAN => 1);
+    chdir $dir or die $!;
+
+    my @cmd = ('git', 'clone', '--depth=1', $git_url);
+    system @cmd;
+    die "Command '@cmd' failed" if $? != 0;
+
+    my $git_wd = sub {
+	opendir my $dirh, '.' or die $!;
+	while(defined(my $entry = readdir($dirh))) {
+	    next if $entry eq '.' || $entry eq '..';
+	    return $entry;
+	}
+    }->();
+    
+    set_github_env('CPANARG', "$dir/$git_wd/.");
+    set_github_env('CPAN_PLUGIN_SYSDEPS_MODULE', $module);
+} else{
+    set_github_env('CPANARG', $module);
+}
