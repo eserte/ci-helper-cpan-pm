@@ -291,7 +291,7 @@ jobs:
         name: cpan-test-report-${{ matrix.os }}
         path: ${{ steps.artifact-path.outputs.userprofile }}\\var\\cpantesters\\new\\*.rpt
 
-  test-module-freebsd:
+  test-module-bsd:
     name: on ${{ matrix.operating_system }} ${{ matrix.osvers }} ${{ matrix.architecture }}
     runs-on: ubuntu-22.04
     strategy:
