@@ -7,6 +7,9 @@ on:
       module:
         type: string
         required: true
+      git-url:
+        type: string
+        required: false
       include-distroprefs:
         type: boolean
         default: true
@@ -196,9 +199,15 @@ jobs:
       continue-on-error: true
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
+    - name: maybe git clone repository
+      env:
+        INPUTS_MODULE: ${{ inputs.module }}
+        INPUTS_GIT_URL: ${{ inputs.git-url }}
+      run: |
+        $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-handle-inputs
     - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
       run: |
-        cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
+        cpan ${{ inputs.test-only && '-t ' || '' }}$CPANARG
     - name: check ${{ inputs.module }}
       run: |
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}
@@ -271,9 +280,15 @@ jobs:
       continue-on-error: true
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
+    - name: maybe git clone repository
+      env:
+        INPUTS_MODULE: ${{ inputs.module }}
+        INPUTS_GIT_URL: ${{ inputs.git-url }}
+      run: |
+        perl "$env:GITHUB_WORKSPACE\ci-helper-cpan-pm\gh-handle-inputs"
     - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
       run: |
-        cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
+        cpan ${{ inputs.test-only && '-t ' || '' }}$env:CPANARG
     - name: check ${{ inputs.module }}
       run: |
         $check_cmd = "perl $env:GITHUB_WORKSPACE\ci-helper-cpan-pm\gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}"
@@ -327,10 +342,14 @@ jobs:
         path: ci-helper-cpan-pm
 
     - uses: cross-platform-actions/action@v0.32.0
+      env:
+        INPUTS_MODULE: ${{ inputs.module }}
+        INPUTS_GIT_URL: ${{ inputs.git-url }}
       with:
         operating_system: '${{ matrix.operating_system }}'
         version:          '${{ matrix.osvers }}'
         architecture:     '${{ matrix.architecture }}'
+        environment_variables: INPUTS_MODULE INPUTS_GIT_URL
         shell: bash
         run: |
           echo "::group::Install basic system prereqs (perl...)"
@@ -408,9 +427,12 @@ jobs:
               set -e
           fi
 
+          # maybe git clone repository
+          $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-handle-inputs --module="${{ inputs.module }}" --git-url="${{ inputs.git_dir }}"
+
           echo "::group::Build and test module"
           set -x
-          cpan ${{ inputs.test-only && '-t ' || '' }}${{ inputs.module }}
+          cpan ${{ inputs.test-only && '-t ' || '' }}$CPANARG
 
           $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}
 
