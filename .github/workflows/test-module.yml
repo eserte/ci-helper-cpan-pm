@@ -57,6 +57,8 @@ jobs:
           # another ubuntu as a container, not runner
           - os: 'ubuntu-latest'
             container: ubuntu:24.04
+          - os: 'ubuntu-latest'
+            container: ubuntu:26.04
           ## XXX as of 2025-07-13: does not start at all
           #- os: 'ubuntu-24.04-arm64'
           #  container: ~
@@ -81,6 +83,8 @@ jobs:
             container: debian:bookworm
           - os: 'ubuntu-latest'
             container: debian:trixie
+          - os: 'ubuntu-latest'
+            container: debian:forky
           - os: 'ubuntu-latest'
             container: alpine:3.23
 
