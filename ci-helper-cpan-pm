@@ -14,7 +14,7 @@ my $with_sudo = $> != 0;
 my $run_tests = 1;
 my @urllist;
 my @default_urllist = qw(http://cpan.metacpan.org/ http://www.cpan.org/ http://cpan.cpantesters.org/ ftp://ftp.funet.fi/pub/CPAN);
-my $yaml_module = 'YAML';
+my $yaml_module = '__ANY__';
 my $reports_dir = "$home_dir/var/cpantesters/new"; # will be created if missing and needed
 
 sub usage () {
@@ -97,6 +97,20 @@ sub cpan_mod_install (@) {
 	}
     }
     print STDERR "done.\n";
+}
+
+if ($yaml_module eq '__ANY__') {
+ TRY_INSTALLED_YAML_MOD: {
+	for my $test_yaml_module (qw(YAML::XS YAML YAML::PP YAML::Syck)) {
+	    if (module_path($test_yaml_module)) {
+		$yaml_module = $test_yaml_module;
+		warn "INFO: choose to use '$yaml_module'.\n";
+		last TRY_INSTALLED_YAML_MOD;
+	    }
+	}
+	$yaml_module = 'YAML';
+	warn "INFO: no YAML module yet installed, fallback to use '$yaml_module' (will be installed later).\n";
+    }
 }
 
 if (!@urllist) {
@@ -267,7 +281,7 @@ EOF
     cpan_mod_install @toolchain_modules;
 }
 
-if (!eval qq{ require $yaml_module; 1 }) {
+if (!module_path($yaml_module)) {
  TRY_INSTALL_YAML: {
 	my $os_release = get_os_release();
 	if ($os_release) {
@@ -276,6 +290,7 @@ if (!eval qq{ require $yaml_module; 1 }) {
 		my %pm_to_deb = (
 		    'YAML'       => 'libyaml-perl',
 		    'YAML::XS'   => 'libyaml-libyaml-perl',
+		    'YAML::PP'   => 'libyaml-pp-perl',
 		    'YAML::Syck' => 'libyaml-syck-perl',
 		);
 		my $package = $pm_to_deb{$yaml_module};
