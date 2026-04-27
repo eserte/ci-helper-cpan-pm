@@ -439,6 +439,10 @@ jobs:
 
           # maybe git clone repository
           $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-handle-inputs --module="${{ inputs.module }}" --git-url="${{ inputs.git_dir }}"
+          # $GITHUB_ENV not automatically made available to next commands, need to do it manually
+          while IFS= read -r line; do
+            export "$line"
+          done < "$GITHUB_ENV"
 
           echo "::group::Build and test module"
           set -x
