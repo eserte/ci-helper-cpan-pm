@@ -22,21 +22,18 @@ sub set_github_env ($$) {
 GetOptions(
     'module=s'  => \my $module,
     'git-url=s' => \my $git_url,
-    'git-branch=s' => \my $git_branch,
-) or die "usage: $0 [--module ...] [--git-url ...] [--git-branch ...]\n";
+) or die "usage: $0 [--module ...] [--git-url ...]\n";
 
 $module //= $ENV{INPUTS_MODULE};
 if (!defined $module || $module eq '') {
     die 'Mandatory environment variable INPUTS_MODULE not set. Please set env.INPUTS_MODULE: ${{ inputs.module }} in your workflow.'."\n";
 }
 $git_url //= $ENV{INPUTS_GIT_URL} if defined $ENV{INPUTS_GIT_URL} && $ENV{INPUTS_GIT_URL} ne '';
-$git_branch //= $ENV{INPUTS_GIT_BRANCH} if defined $ENV{INPUTS_GIT_BRANCH} && $ENV{INPUTS_GIT_BRANCH} ne '';
 
 if (defined $git_url) {
+    my $git_branch;
     if ($git_url =~ s{#(.*)}{}) {
-        if (!defined $git_branch) {
-            $git_branch = $1;
-        }
+        $git_branch = $1;
     }
 
     my $dir = tempdir("gh-handle-inputs-XXXXXXXX", TMPDIR => 1, CLEAN => 1);
