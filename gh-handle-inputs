@@ -25,10 +25,15 @@ if (!defined $module || $module eq '') {
 my $git_url = defined $ENV{INPUTS_GIT_URL} && $ENV{INPUTS_GIT_URL} ne '' ? $ENV{INPUTS_GIT_URL} : undef;
 
 if (defined $git_url) {
+    my $git_branch;
+    if ($git_url =~ s{#(.*)}{}) {
+        $git_branch = $1;
+    }
+
     my $dir = tempdir("gh-handle-inputs-XXXXXXXX", TMPDIR => 1, CLEAN => 1);
     chdir $dir or die $!;
 
-    my @cmd = ('git', 'clone', '--depth=1', $git_url);
+    my @cmd = ('git', 'clone', '--depth=1', (defined $git_branch ? ('-b', $git_branch) : ()), $git_url);
     system @cmd;
     die "Command '@cmd' failed" if $? != 0;
 
