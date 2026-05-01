@@ -10,6 +10,9 @@ on:
       git-url:
         type: string
         required: false
+      git-branch:
+        type: string
+        required: false
       include-distroprefs:
         type: boolean
         default: true
@@ -213,6 +216,7 @@ jobs:
       env:
         INPUTS_MODULE: ${{ inputs.module }}
         INPUTS_GIT_URL: ${{ inputs.git-url }}
+        INPUTS_GIT_BRANCH: ${{ inputs.git-branch }}
       run: |
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-handle-inputs
     - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
@@ -294,6 +298,7 @@ jobs:
       env:
         INPUTS_MODULE: ${{ inputs.module }}
         INPUTS_GIT_URL: ${{ inputs.git-url }}
+        INPUTS_GIT_BRANCH: ${{ inputs.git-branch }}
       run: |
         perl "$env:GITHUB_WORKSPACE\ci-helper-cpan-pm\gh-handle-inputs"
     - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
@@ -355,11 +360,12 @@ jobs:
       env:
         INPUTS_MODULE: ${{ inputs.module }}
         INPUTS_GIT_URL: ${{ inputs.git-url }}
+        INPUTS_GIT_BRANCH: ${{ inputs.git-branch }}
       with:
         operating_system: '${{ matrix.operating_system }}'
         version:          '${{ matrix.osvers }}'
         architecture:     '${{ matrix.architecture }}'
-        environment_variables: INPUTS_MODULE INPUTS_GIT_URL
+        environment_variables: INPUTS_MODULE INPUTS_GIT_URL INPUTS_GIT_BRANCH
         shell: bash
         run: |
           echo "::group::Install basic system prereqs (perl...)"
@@ -438,7 +444,7 @@ jobs:
           fi
 
           # maybe git clone repository
-          $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-handle-inputs --module="${{ inputs.module }}" --git-url="${{ inputs.git_dir }}"
+          $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-handle-inputs
           # $GITHUB_ENV not automatically made available to next commands, need to do it manually
           while IFS= read -r line; do
             export "$line"

@@ -5,6 +5,7 @@
 use strict;
 use warnings;
 use File::Temp qw(tempdir);
+use Getopt::Long;
 
 sub set_github_env ($$) {
     my($key, $value) = @_;
@@ -18,17 +19,30 @@ sub set_github_env ($$) {
     close $fh or die $!;
 }
 
-my $module = $ENV{INPUTS_MODULE};
+GetOptions(
+    'module=s'  => \my $module,
+    'git-url=s' => \my $git_url,
+    'git-branch=s' => \my $git_branch,
+) or die "usage: $0 [--module ...] [--git-url ...] [--git-branch ...]\n";
+
+$module //= $ENV{INPUTS_MODULE};
 if (!defined $module || $module eq '') {
     die 'Mandatory environment variable INPUTS_MODULE not set. Please set env.INPUTS_MODULE: ${{ inputs.module }} in your workflow.'."\n";
 }
-my $git_url = defined $ENV{INPUTS_GIT_URL} && $ENV{INPUTS_GIT_URL} ne '' ? $ENV{INPUTS_GIT_URL} : undef;
+$git_url //= $ENV{INPUTS_GIT_URL} if defined $ENV{INPUTS_GIT_URL} && $ENV{INPUTS_GIT_URL} ne '';
+$git_branch //= $ENV{INPUTS_GIT_BRANCH} if defined $ENV{INPUTS_GIT_BRANCH} && $ENV{INPUTS_GIT_BRANCH} ne '';
 
 if (defined $git_url) {
+    if ($git_url =~ s{#(.*)}{}) {
+        if (!defined $git_branch) {
+            $git_branch = $1;
+        }
+    }
+
     my $dir = tempdir("gh-handle-inputs-XXXXXXXX", TMPDIR => 1, CLEAN => 1);
     chdir $dir or die $!;
 
-    my @cmd = ('git', 'clone', '--depth=1', $git_url);
+    my @cmd = ('git', 'clone', '--depth=1', (defined $git_branch ? ('-b', $git_branch) : ()), $git_url);
     system @cmd;
     die "Command '@cmd' failed" if $? != 0;
 
