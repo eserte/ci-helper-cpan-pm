@@ -34,13 +34,24 @@ on:
 
 jobs:
   test-module:
-    name: on ${{ matrix.container || matrix.os }}
+    name: on ${{ matrix.container || (matrix.operating_system && format('{0} {1} {2}', matrix.operating_system, matrix.osvers, matrix.architecture)) || matrix.os }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
+    env:
+      INPUTS_MODULE: ${{ inputs.module }}
+      INPUTS_GIT_URL: ${{ inputs.git-url }}
+      HAS_SYSDEPS_SUPPORT: yes
+    defaults:
+      run:
+        # cpa.sh is cross-platform-actions/action "magic"
+        # otherwise prefer "sh" over "bash", as some operating systems come only with the former
+        shell: ${{ matrix.operating_system && 'cpa.sh {0}' || 'sh' }}
     strategy:
       fail-fast: false
       matrix:
         include:
+          ######################################################################
+          # VM runners
           - os: 'macos-14'
             container: ~
           - os: 'macos-15'
@@ -48,13 +59,15 @@ jobs:
           ## XXX as of 2025-07-13: does not start at all
           #- os: 'macOS-15-arm64'
           #  container: ~
-          - os: 'ubuntu-latest'
-            container: ubuntu:20.04
           - os: 'ubuntu-22.04'
             container: ~
           - os: 'ubuntu-24.04'
             container: ~
-          # another ubuntu as a container, not runner
+          ######################################################################
+          # containers
+          # other ubuntus as containers, not runners
+          - os: 'ubuntu-latest'
+            container: ubuntu:20.04
           - os: 'ubuntu-latest'
             container: ubuntu:24.04
           - os: 'ubuntu-latest'
@@ -87,10 +100,54 @@ jobs:
             container: debian:forky
           - os: 'ubuntu-latest'
             container: alpine:3.23
+          ######################################################################
+          # operating systems handled by cross-platform-actions
+          - os: 'ubuntu-24.04'
+            operating_system: freebsd
+            osvers: '15.0'
+            architecture: 'x86-64'
+          - os: 'ubuntu-24.04'
+            operating_system: freebsd
+            osvers: '14.4'
+            architecture: 'x86-64'
+          - os: 'ubuntu-24.04'
+            operating_system: freebsd
+            osvers: '13.5'
+            architecture: 'x86-64'
+          - os: 'ubuntu-24.04'
+            operating_system: openbsd
+            osvers: '7.9'
+            architecture: 'x86-64'
+          - os: 'ubuntu-24.04'
+            operating_system: netbsd
+            osvers: '10.1'
+            architecture: 'x86-64'
 
     steps:
     - name: Current workflow inputs
       run: echo "${{ toJSON(github.event.inputs) }}"
+      shell: sh
+
+    - uses: actions/checkout@v3
+      with:
+        repository: eserte/ci-helper-cpan-pm
+        path: ci-helper-cpan-pm
+      if: matrix.container == 'centos:7' || matrix.container == 'debian:stretch'
+    - uses: actions/checkout@v6
+      with:
+        repository: eserte/ci-helper-cpan-pm
+        path: ci-helper-cpan-pm
+      if: matrix.container != 'centos:7' && matrix.container != 'debian:stretch'
+
+    - name: Start VM
+      uses: cross-platform-actions/action@v1.2.0
+      if: matrix.operating_system
+      with:
+        operating_system: ${{ matrix.operating_system }}
+        version: ${{ matrix.osvers }}
+        architecture: ${{ matrix.architecture }}
+        environment_variables: CPANARG INPUTS_MODULE INPUTS_GIT_URL HAS_SYSDEPS_SUPPORT
+        shell: bash
 
     # Run early because some actions may depend on installing packages
     - name: "Fix sources.list for archived Debian releases"
@@ -105,16 +162,28 @@ jobs:
           echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
         fi
 
-    - uses: actions/checkout@v3
-      with:
-        repository: eserte/ci-helper-cpan-pm
-        path: ci-helper-cpan-pm
-      if: matrix.container == 'centos:7' || matrix.container == 'debian:stretch'
-    - uses: actions/checkout@v6
-      with:
-        repository: eserte/ci-helper-cpan-pm
-        path: ci-helper-cpan-pm
-      if: matrix.container != 'centos:7' && matrix.container != 'debian:stretch'
+    - name: "FreeBSD: install basic system prereqs (perl...)"
+      if: matrix.operating_system == 'freebsd'
+      run: |
+          sudo pkg update
+          sudo pkg install -y perl5 git
+
+    - name: "OpenBSD: install basic system prereqs (perl...)"
+      if: matrix.operating_system == 'openbsd'
+      run: |
+          sudo pkg_add -u
+          sudo pkg_add perl git
+
+    - name: "NetBSD: install basic system prereqs (perl...)"
+      if: matrix.operating_system == 'netbsd'
+      run: |
+          if command -v pkgin >/dev/null 2>&1; then
+            sudo pkgin -y update
+            sudo pkgin -y install perl git
+          else
+            sudo pkg_add perl git
+          fi
+          echo "HAS_SYSDEPS_SUPPORT=no" >> "$GITHUB_ENV"
 
     - name: "CentOS: install epel"
       run: |
@@ -187,7 +256,12 @@ jobs:
         sysdeps_opts=
         if [ ${{ inputs.include-sysdeps }} = 'true' ]
         then
-            sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
+            if [ "$HAS_SYSDEPS_SUPPORT" = "yes" ]
+            then
+                sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
+            else
+                echo "Turning off sysdeps option. No support for operating system ${{ matrix.operating_system }}"
+            fi
         fi
         cpan_reporter_opts=
         if [ ${{ inputs.enable-cpan-reporter }} = 'true' ]
@@ -199,20 +273,20 @@ jobs:
         then
             debug_opts='--debug'
         fi
+        reports_dir_opts="--reports-dir=$HOME/work/var/cpantesters/new"
         set -ex
-        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
+        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $reports_dir_opts $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
     - name: cpan-sysdeps check
+      if: "env.HAS_SYSDEPS_SUPPORT != 'no'"
       continue-on-error: true
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }}
     - name: cpan-sysdeps dry-run commands
+      if: "env.HAS_SYSDEPS_SUPPORT != 'no'"
       continue-on-error: true
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
     - name: maybe git clone repository
-      env:
-        INPUTS_MODULE: ${{ inputs.module }}
-        INPUTS_GIT_URL: ${{ inputs.git-url }}
       run: |
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-handle-inputs
     - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
@@ -228,6 +302,8 @@ jobs:
       run: |
         if [ -n "${{ matrix.container }}" ]; then
           NAME="${{ matrix.container }}"
+        elif [ -n "${{ matrix.operating_system }}" ]; then
+          NAME="${{ matrix.operating_system }}-${{ matrix.osvers }}-${{ matrix.architecture }}"
         else
           NAME="${{ matrix.os }}"
         fi
@@ -239,11 +315,14 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact-name.outputs.artifact_name }}
-        path: ~/var/cpantesters/new/*.rpt
+        path: '~/work/var/cpantesters/new/*.rpt'
 
   test-module-windows:
     name: on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      INPUTS_MODULE: ${{ inputs.module }}
+      INPUTS_GIT_URL: ${{ inputs.git-url }}
     strategy:
       fail-fast: false
       matrix:
@@ -291,9 +370,6 @@ jobs:
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
     - name: maybe git clone repository
-      env:
-        INPUTS_MODULE: ${{ inputs.module }}
-        INPUTS_GIT_URL: ${{ inputs.git-url }}
       run: |
         perl "$env:GITHUB_WORKSPACE\ci-helper-cpan-pm\gh-handle-inputs"
     - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
@@ -316,143 +392,3 @@ jobs:
         name: cpan-test-report-${{ matrix.os }}
         path: ${{ steps.artifact-path.outputs.userprofile }}\\var\\cpantesters\\new\\*.rpt
 
-  test-module-bsd:
-    name: on ${{ matrix.operating_system }} ${{ matrix.osvers }} ${{ matrix.architecture }}
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - operating_system: freebsd
-            osvers: '15.0'
-            architecture: 'x86-64'
-          - operating_system: freebsd
-            osvers: '14.4'
-            architecture: 'x86-64'
-## XXX works, but is too slow --- maybe enable with a new "slow and obscure configurations" switch
-#          - operating_system: freebsd
-#            osvers: '14.2'
-#            architecture: 'arm64'
-          - operating_system: freebsd
-            osvers: '13.5'
-            architecture: 'x86-64'
-          - operating_system: openbsd
-            osvers: '7.9'
-            architecture: 'x86-64'
-          - operating_system: netbsd
-            osvers: '10.1'
-            architecture: 'x86-64'
-    steps:
-    - name: Current workflow inputs
-      run: echo "${{ toJSON(github.event.inputs) }}"
-
-    - uses: actions/checkout@v6
-      with:
-        repository: eserte/ci-helper-cpan-pm
-        path: ci-helper-cpan-pm
-
-    - uses: cross-platform-actions/action@v1.2.0
-      env:
-        INPUTS_MODULE: ${{ inputs.module }}
-        INPUTS_GIT_URL: ${{ inputs.git-url }}
-      with:
-        operating_system: '${{ matrix.operating_system }}'
-        version:          '${{ matrix.osvers }}'
-        architecture:     '${{ matrix.architecture }}'
-        environment_variables: INPUTS_MODULE INPUTS_GIT_URL
-        shell: bash
-        run: |
-          echo "::group::Install basic system prereqs (perl...)"
-
-          has_sysdeps_support=no
-          case "${{ matrix.operating_system }}" in
-            freebsd)
-              sudo pkg update
-              sudo pkg install -y perl5 git
-              has_sysdeps_support=yes
-              ;;
-            openbsd)
-              # Update packages and install with pkg_add
-              sudo pkg_add -u
-              sudo pkg_add perl git
-              has_sysdeps_support=yes
-              ;;
-            netbsd)
-              # Install using pkgin or pkg_add (depending on system setup)
-              if command -v pkgin >/dev/null 2>&1; then
-                sudo pkgin -y update
-                sudo pkgin -y install perl git
-              else
-                sudo pkg_add perl git
-              fi
-              has_sysdeps_support=no
-              ;;
-            *)
-              echo "Unsupported OS: ${{ matrix.operating_system }}"
-              exit 1
-              ;;
-          esac
-
-          echo "::group::Setup CPAN environment"
-
-          distroprefs_opts=
-          if [ ${{ inputs.include-distroprefs }} = 'true' ]
-          then
-              distroprefs_opts='--distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --distroprefs-branch=${{ inputs.distroprefs-branch }}'
-          fi
-          sysdeps_opts=
-          if [ ${{ inputs.include-sysdeps }} = 'true' ]
-          then
-              if [ "$has_sysdeps_support" = "yes" ]
-              then
-                  sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
-              else
-                  echo "Turning off sysdeps option. No support for operating system ${{ matrix.operating_system }}"
-              fi
-          fi
-          cpan_reporter_opts=
-          if [ ${{ inputs.enable-cpan-reporter }} = 'true' ]
-          then
-              cpan_reporter_opts='--enable-cpan-reporter --email-from=${{ github.actor }}@users.noreply.github.com'
-          fi
-          debug_opts=
-          if [ ${{ inputs.debug }} = 'true' ]
-          then
-              debug_opts='--debug'
-          fi
-          set -ex
-          $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test --reports-dir=$HOME/work/var/cpantesters/new $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
-          set +x
-
-          if [ "$sysdeps_opts" != '' ]
-          then
-              set +e
-
-              echo "::group::cpan-sysdeps check"
-              cpan-sysdeps --cpanmod ${{ inputs.module }}
-
-              echo "::group::cpan-sysdeps dry-run commands"
-              cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
-
-              set -e
-          fi
-
-          # maybe git clone repository
-          $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-handle-inputs
-          # $GITHUB_ENV not automatically made available to next commands, need to do it manually
-          while IFS= read -r line; do
-            export "$line"
-          done < "$GITHUB_ENV"
-
-          echo "::group::Build and test module"
-          set -x
-          cpan ${{ inputs.test-only && '-t ' || '' }}$CPANARG
-
-          $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}
-
-    - name: upload CPAN test reports
-      if: always() && inputs.enable-cpan-reporter == true
-      uses: actions/upload-artifact@v7
-      with:
-        name: cpan-test-report-${{ matrix.operating_system }}-${{ matrix.osvers }}-${{ matrix.architecture }}
-        path: ~/work/var/cpantesters/new/*.rpt
