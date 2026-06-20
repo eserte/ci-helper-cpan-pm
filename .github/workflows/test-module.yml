@@ -34,9 +34,12 @@ on:
 
 jobs:
   test-module:
-    name: on ${{ matrix.container || matrix.os }}
+    name: on ${{ matrix.container || (matrix.is_bsd && format('{0} {1} {2}', matrix.operating_system, matrix.osvers, matrix.architecture)) || matrix.os }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell || 'bash' }}
     strategy:
       fail-fast: false
       matrix:
@@ -87,13 +90,50 @@ jobs:
             container: debian:forky
           - os: 'ubuntu-latest'
             container: alpine:3.23
+          - os: 'ubuntu-24.04'
+            operating_system: freebsd
+            osvers: '15.0'
+            architecture: 'x86-64'
+            is_bsd: true
+            shell: 'cpa.sh {0}'
+            has_sysdeps_support: 'yes'
+          - os: 'ubuntu-24.04'
+            operating_system: freebsd
+            osvers: '14.4'
+            architecture: 'x86-64'
+            is_bsd: true
+            shell: 'cpa.sh {0}'
+            has_sysdeps_support: 'yes'
+          - os: 'ubuntu-24.04'
+            operating_system: freebsd
+            osvers: '13.5'
+            architecture: 'x86-64'
+            is_bsd: true
+            shell: 'cpa.sh {0}'
+            has_sysdeps_support: 'yes'
+          - os: 'ubuntu-24.04'
+            operating_system: openbsd
+            osvers: '7.9'
+            architecture: 'x86-64'
+            is_bsd: true
+            shell: 'cpa.sh {0}'
+            has_sysdeps_support: 'yes'
+          - os: 'ubuntu-24.04'
+            operating_system: netbsd
+            osvers: '10.1'
+            architecture: 'x86-64'
+            is_bsd: true
+            shell: 'cpa.sh {0}'
+            has_sysdeps_support: 'no'
 
     steps:
     - name: Current workflow inputs
       run: echo "${{ toJSON(github.event.inputs) }}"
+      shell: bash
 
     # Run early because some actions may depend on installing packages
     - name: "Fix sources.list for archived Debian releases"
+      if: "!matrix.is_bsd"
       run: |
         codename="$(grep VERSION_CODENAME /etc/os-release 2>/dev/null | cut -d= -f2 || true)"
         if [ "$codename" = "buster" ] || [ "$codename" = "stretch" ]; then
@@ -109,36 +149,75 @@ jobs:
       with:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
-      if: matrix.container == 'centos:7' || matrix.container == 'debian:stretch'
+      if: "(matrix.container == 'centos:7' || matrix.container == 'debian:stretch') && !matrix.is_bsd"
     - uses: actions/checkout@v6
       with:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
-      if: matrix.container != 'centos:7' && matrix.container != 'debian:stretch'
+      if: "(matrix.container != 'centos:7' && matrix.container != 'debian:stretch') || matrix.is_bsd"
+
+    - name: Start VM
+      uses: cross-platform-actions/action@v1.2.0
+      if: matrix.is_bsd
+      with:
+        operating_system: ${{ matrix.operating_system }}
+        version: ${{ matrix.osvers }}
+        architecture: ${{ matrix.architecture }}
+        environment_variables: CPANARG CPAN_REPORTER_CONFIG GITHUB_WORKSPACE INPUTS_MODULE INPUTS_GIT_URL
+        shell: bash
+
+    - name: "BSD: install basic system prereqs (perl...)"
+      if: matrix.is_bsd
+      run: |
+          echo "::group::Install basic system prereqs (perl...)"
+          case "${{ matrix.operating_system }}" in
+            freebsd)
+              sudo pkg update
+              sudo pkg install -y perl5 git
+              ;;
+            openbsd)
+              # Update packages and install with pkg_add
+              sudo pkg_add -u
+              sudo pkg_add perl git
+              ;;
+            netbsd)
+              # Install using pkgin or pkg_add (depending on system setup)
+              if command -v pkgin >/dev/null 2>&1; then
+                sudo pkgin -y update
+                sudo pkgin -y install perl git
+              else
+                sudo pkg_add perl git
+              fi
+              ;;
+            *)
+              echo "Unsupported OS: ${{ matrix.operating_system }}"
+              exit 1
+              ;;
+          esac
 
     - name: "CentOS: install epel"
       run: |
         yum -y install epel-release
-      if: "startsWith(matrix.container, 'centos')"
+      if: "startsWith(matrix.container, 'centos') && !matrix.is_bsd"
 
     - name: "Rocky Linux: Clean and update repositories"
       run: |
         dnf clean all
         rm -rf /var/cache/yum
         dnf update -y
-      if: "startsWith(matrix.container, 'rockylinux')"
+      if: "startsWith(matrix.container, 'rockylinux') && !matrix.is_bsd"
 
     - name: "Rocky Linux: Enable CRB repository"
       run: |
         dnf install -y dnf-plugins-core
         dnf config-manager --set-enabled crb
-      if: "startsWith(matrix.container, 'rockylinux')"
+      if: "startsWith(matrix.container, 'rockylinux') && !matrix.is_bsd"
 
     - name: "rpm-based systems: install perl, CPAN.pm, git..."
       run: |
         dnf -y install "perl(CPAN)" "perl(Test::More)" "perl(Parse::CPAN::Meta)" \
           git make gcc patch glibc-devel
-      if: "startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos') || startsWith(matrix.container, 'rockylinux')"
+      if: "(startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos') || startsWith(matrix.container, 'rockylinux')) && !matrix.is_bsd"
 
     - name: "apt-based systems: install perl, CPAN.pm, git, make, cc..."
       env:
@@ -153,21 +232,22 @@ jobs:
         sudocmd=$( [ "$(id -u)" -ne 0 ] && echo "sudo" || echo "" )
         $sudocmd apt-get update -yq && $sudocmd apt-get install -yqq perl git make gcc g++ $extra_pkgs
         echo "DEBIAN_FRONTEND=noninteractive" >> "$GITHUB_ENV"
-      if: "startsWith(matrix.container, 'debian') || startsWith(matrix.container || matrix.os, 'ubuntu')"
+      if: "(startsWith(matrix.container, 'debian') || startsWith(matrix.container || matrix.os, 'ubuntu')) && !matrix.is_bsd"
 
     - name: "apk-based systems: install perl, CPAN.pm, git..."
       run: |
         apk update -q && apk add -q perl perl-dev perl-utils git build-base wget patch
-      if: "startsWith(matrix.container, 'alpine')"
+      if: "startsWith(matrix.container, 'alpine') && !matrix.is_bsd"
 
     - name: "perlbrew-based systems: add Perl executable path to GITHUB_PATH"
       run: |
         echo "$(perl -MConfig -e 'print $Config{sitebin}')" >> $GITHUB_PATH
-      if: "startsWith(matrix.os, 'macos')"
+      if: "startsWith(matrix.os, 'macos') && !matrix.is_bsd"
 
     - name: apt hacks
       # the already installed libgd3 conflicts with libgd-dev to be installed
       # also, /etc/apt/sources.list should be sufficient; all the other repositories are possibly problematic
+      if: "!matrix.is_bsd"
       run: |
         if [ -d /etc/apt/sources.list.d ]; then
           echo "Remove additional apt sources..."
@@ -187,7 +267,17 @@ jobs:
         sysdeps_opts=
         if [ ${{ inputs.include-sysdeps }} = 'true' ]
         then
-            sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
+            if [ "${{ matrix.is_bsd }}" = "true" ]
+            then
+                if [ "${{ matrix.has_sysdeps_support }}" = "yes" ]
+                then
+                    sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
+                else
+                    echo "Turning off sysdeps option. No support for operating system ${{ matrix.operating_system }}"
+                fi
+            else
+                sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
+            fi
         fi
         cpan_reporter_opts=
         if [ ${{ inputs.enable-cpan-reporter }} = 'true' ]
@@ -199,13 +289,20 @@ jobs:
         then
             debug_opts='--debug'
         fi
+        reports_dir_opts=
+        if [ "${{ matrix.is_bsd }}" = "true" ]
+        then
+            reports_dir_opts="--reports-dir=$HOME/work/var/cpantesters/new"
+        fi
         set -ex
-        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
+        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $reports_dir_opts $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
     - name: cpan-sysdeps check
+      if: "matrix.has_sysdeps_support == 'yes' || !matrix.is_bsd"
       continue-on-error: true
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }}
     - name: cpan-sysdeps dry-run commands
+      if: "matrix.has_sysdeps_support == 'yes' || !matrix.is_bsd"
       continue-on-error: true
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
@@ -224,10 +321,12 @@ jobs:
     - name: Prepare artifact name
       if: always() && inputs.enable-cpan-reporter == true
       id: artifact-name
-      shell: sh
+      shell: bash
       run: |
         if [ -n "${{ matrix.container }}" ]; then
           NAME="${{ matrix.container }}"
+        elif [ "${{ matrix.is_bsd }}" = "true" ]; then
+          NAME="${{ matrix.operating_system }}-${{ matrix.osvers }}-${{ matrix.architecture }}"
         else
           NAME="${{ matrix.os }}"
         fi
@@ -239,7 +338,7 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact-name.outputs.artifact_name }}
-        path: ~/var/cpantesters/new/*.rpt
+        path: ${{ matrix.is_bsd && '~/work/var/cpantesters/new/*.rpt' || '~/var/cpantesters/new/*.rpt' }}
 
   test-module-windows:
     name: on ${{ matrix.os }}
@@ -316,143 +415,3 @@ jobs:
         name: cpan-test-report-${{ matrix.os }}
         path: ${{ steps.artifact-path.outputs.userprofile }}\\var\\cpantesters\\new\\*.rpt
 
-  test-module-bsd:
-    name: on ${{ matrix.operating_system }} ${{ matrix.osvers }} ${{ matrix.architecture }}
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - operating_system: freebsd
-            osvers: '15.0'
-            architecture: 'x86-64'
-          - operating_system: freebsd
-            osvers: '14.4'
-            architecture: 'x86-64'
-## XXX works, but is too slow --- maybe enable with a new "slow and obscure configurations" switch
-#          - operating_system: freebsd
-#            osvers: '14.2'
-#            architecture: 'arm64'
-          - operating_system: freebsd
-            osvers: '13.5'
-            architecture: 'x86-64'
-          - operating_system: openbsd
-            osvers: '7.9'
-            architecture: 'x86-64'
-          - operating_system: netbsd
-            osvers: '10.1'
-            architecture: 'x86-64'
-    steps:
-    - name: Current workflow inputs
-      run: echo "${{ toJSON(github.event.inputs) }}"
-
-    - uses: actions/checkout@v6
-      with:
-        repository: eserte/ci-helper-cpan-pm
-        path: ci-helper-cpan-pm
-
-    - uses: cross-platform-actions/action@v1.2.0
-      env:
-        INPUTS_MODULE: ${{ inputs.module }}
-        INPUTS_GIT_URL: ${{ inputs.git-url }}
-      with:
-        operating_system: '${{ matrix.operating_system }}'
-        version:          '${{ matrix.osvers }}'
-        architecture:     '${{ matrix.architecture }}'
-        environment_variables: INPUTS_MODULE INPUTS_GIT_URL
-        shell: bash
-        run: |
-          echo "::group::Install basic system prereqs (perl...)"
-
-          has_sysdeps_support=no
-          case "${{ matrix.operating_system }}" in
-            freebsd)
-              sudo pkg update
-              sudo pkg install -y perl5 git
-              has_sysdeps_support=yes
-              ;;
-            openbsd)
-              # Update packages and install with pkg_add
-              sudo pkg_add -u
-              sudo pkg_add perl git
-              has_sysdeps_support=yes
-              ;;
-            netbsd)
-              # Install using pkgin or pkg_add (depending on system setup)
-              if command -v pkgin >/dev/null 2>&1; then
-                sudo pkgin -y update
-                sudo pkgin -y install perl git
-              else
-                sudo pkg_add perl git
-              fi
-              has_sysdeps_support=no
-              ;;
-            *)
-              echo "Unsupported OS: ${{ matrix.operating_system }}"
-              exit 1
-              ;;
-          esac
-
-          echo "::group::Setup CPAN environment"
-
-          distroprefs_opts=
-          if [ ${{ inputs.include-distroprefs }} = 'true' ]
-          then
-              distroprefs_opts='--distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --distroprefs-branch=${{ inputs.distroprefs-branch }}'
-          fi
-          sysdeps_opts=
-          if [ ${{ inputs.include-sysdeps }} = 'true' ]
-          then
-              if [ "$has_sysdeps_support" = "yes" ]
-              then
-                  sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
-              else
-                  echo "Turning off sysdeps option. No support for operating system ${{ matrix.operating_system }}"
-              fi
-          fi
-          cpan_reporter_opts=
-          if [ ${{ inputs.enable-cpan-reporter }} = 'true' ]
-          then
-              cpan_reporter_opts='--enable-cpan-reporter --email-from=${{ github.actor }}@users.noreply.github.com'
-          fi
-          debug_opts=
-          if [ ${{ inputs.debug }} = 'true' ]
-          then
-              debug_opts='--debug'
-          fi
-          set -ex
-          $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test --reports-dir=$HOME/work/var/cpantesters/new $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
-          set +x
-
-          if [ "$sysdeps_opts" != '' ]
-          then
-              set +e
-
-              echo "::group::cpan-sysdeps check"
-              cpan-sysdeps --cpanmod ${{ inputs.module }}
-
-              echo "::group::cpan-sysdeps dry-run commands"
-              cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
-
-              set -e
-          fi
-
-          # maybe git clone repository
-          $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-handle-inputs
-          # $GITHUB_ENV not automatically made available to next commands, need to do it manually
-          while IFS= read -r line; do
-            export "$line"
-          done < "$GITHUB_ENV"
-
-          echo "::group::Build and test module"
-          set -x
-          cpan ${{ inputs.test-only && '-t ' || '' }}$CPANARG
-
-          $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-mod-check --test-only=${{ inputs.test-only }} ${{ inputs.module }}
-
-    - name: upload CPAN test reports
-      if: always() && inputs.enable-cpan-reporter == true
-      uses: actions/upload-artifact@v7
-      with:
-        name: cpan-test-report-${{ matrix.operating_system }}-${{ matrix.osvers }}-${{ matrix.architecture }}
-        path: ~/work/var/cpantesters/new/*.rpt
