@@ -37,9 +37,12 @@ jobs:
     name: on ${{ matrix.container || (matrix.is_bsd && format('{0} {1} {2}', matrix.operating_system, matrix.osvers, matrix.architecture)) || matrix.os }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
+    env:
+      INPUTS_MODULE: ${{ inputs.module }}
+      INPUTS_GIT_URL: ${{ inputs.git-url }}
     defaults:
       run:
-        shell: ${{ matrix.shell || 'bash' }}
+        shell: ${{ matrix.is_bsd && 'cpa.sh {0}' || 'bash' }}
     strategy:
       fail-fast: false
       matrix:
@@ -95,35 +98,30 @@ jobs:
             osvers: '15.0'
             architecture: 'x86-64'
             is_bsd: true
-            shell: 'cpa.sh {0}'
             has_sysdeps_support: 'yes'
           - os: 'ubuntu-24.04'
             operating_system: freebsd
             osvers: '14.4'
             architecture: 'x86-64'
             is_bsd: true
-            shell: 'cpa.sh {0}'
             has_sysdeps_support: 'yes'
           - os: 'ubuntu-24.04'
             operating_system: freebsd
             osvers: '13.5'
             architecture: 'x86-64'
             is_bsd: true
-            shell: 'cpa.sh {0}'
             has_sysdeps_support: 'yes'
           - os: 'ubuntu-24.04'
             operating_system: openbsd
             osvers: '7.9'
             architecture: 'x86-64'
             is_bsd: true
-            shell: 'cpa.sh {0}'
             has_sysdeps_support: 'yes'
           - os: 'ubuntu-24.04'
             operating_system: netbsd
             osvers: '10.1'
             architecture: 'x86-64'
             is_bsd: true
-            shell: 'cpa.sh {0}'
             has_sysdeps_support: 'no'
 
     steps:
@@ -149,12 +147,12 @@ jobs:
       with:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
-      if: "(matrix.container == 'centos:7' || matrix.container == 'debian:stretch') && !matrix.is_bsd"
+      if: matrix.container == 'centos:7' || matrix.container == 'debian:stretch'
     - uses: actions/checkout@v6
       with:
         repository: eserte/ci-helper-cpan-pm
         path: ci-helper-cpan-pm
-      if: "(matrix.container != 'centos:7' && matrix.container != 'debian:stretch') || matrix.is_bsd"
+      if: matrix.container != 'centos:7' && matrix.container != 'debian:stretch'
 
     - name: Start VM
       uses: cross-platform-actions/action@v1.2.0
@@ -198,26 +196,26 @@ jobs:
     - name: "CentOS: install epel"
       run: |
         yum -y install epel-release
-      if: "startsWith(matrix.container, 'centos') && !matrix.is_bsd"
+      if: "startsWith(matrix.container, 'centos')"
 
     - name: "Rocky Linux: Clean and update repositories"
       run: |
         dnf clean all
         rm -rf /var/cache/yum
         dnf update -y
-      if: "startsWith(matrix.container, 'rockylinux') && !matrix.is_bsd"
+      if: "startsWith(matrix.container, 'rockylinux')"
 
     - name: "Rocky Linux: Enable CRB repository"
       run: |
         dnf install -y dnf-plugins-core
         dnf config-manager --set-enabled crb
-      if: "startsWith(matrix.container, 'rockylinux') && !matrix.is_bsd"
+      if: "startsWith(matrix.container, 'rockylinux')"
 
     - name: "rpm-based systems: install perl, CPAN.pm, git..."
       run: |
         dnf -y install "perl(CPAN)" "perl(Test::More)" "perl(Parse::CPAN::Meta)" \
           git make gcc patch glibc-devel
-      if: "(startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos') || startsWith(matrix.container, 'rockylinux')) && !matrix.is_bsd"
+      if: "startsWith(matrix.container, 'fedora') || startsWith(matrix.container, 'centos') || startsWith(matrix.container, 'rockylinux')"
 
     - name: "apt-based systems: install perl, CPAN.pm, git, make, cc..."
       env:
@@ -237,12 +235,12 @@ jobs:
     - name: "apk-based systems: install perl, CPAN.pm, git..."
       run: |
         apk update -q && apk add -q perl perl-dev perl-utils git build-base wget patch
-      if: "startsWith(matrix.container, 'alpine') && !matrix.is_bsd"
+      if: "startsWith(matrix.container, 'alpine')"
 
     - name: "perlbrew-based systems: add Perl executable path to GITHUB_PATH"
       run: |
         echo "$(perl -MConfig -e 'print $Config{sitebin}')" >> $GITHUB_PATH
-      if: "startsWith(matrix.os, 'macos') && !matrix.is_bsd"
+      if: "startsWith(matrix.os, 'macos')"
 
     - name: apt hacks
       # the already installed libgd3 conflicts with libgd-dev to be installed
