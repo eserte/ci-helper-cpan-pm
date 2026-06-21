@@ -138,7 +138,7 @@ jobs:
         operating_system: ${{ matrix.operating_system }}
         version: ${{ matrix.osvers }}
         architecture: ${{ matrix.architecture }}
-        environment_variables: CPANARG CPAN_REPORTER_CONFIG GITHUB_WORKSPACE INPUTS_MODULE INPUTS_GIT_URL HAS_SYSDEPS_SUPPORT
+        environment_variables: INPUTS_MODULE INPUTS_GIT_URL HAS_SYSDEPS_SUPPORT
         shell: bash
 
     # Run early because some actions may depend on installing packages
