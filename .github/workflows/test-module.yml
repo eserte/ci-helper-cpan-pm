@@ -34,15 +34,16 @@ on:
 
 jobs:
   test-module:
-    name: on ${{ matrix.container || (matrix.is_bsd && format('{0} {1} {2}', matrix.operating_system, matrix.osvers, matrix.architecture)) || matrix.os }}
+    name: on ${{ matrix.container || (matrix.operating_system && format('{0} {1} {2}', matrix.operating_system, matrix.osvers, matrix.architecture)) || matrix.os }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
     env:
       INPUTS_MODULE: ${{ inputs.module }}
       INPUTS_GIT_URL: ${{ inputs.git-url }}
+      HAS_SYSDEPS_SUPPORT: yes
     defaults:
       run:
-        shell: ${{ matrix.is_bsd && 'cpa.sh {0}' || 'sh' }}
+        shell: ${{ matrix.operating_system && 'cpa.sh {0}' || 'sh' }}
     strategy:
       fail-fast: false
       matrix:
@@ -97,51 +98,27 @@ jobs:
             operating_system: freebsd
             osvers: '15.0'
             architecture: 'x86-64'
-            is_bsd: true
-            has_sysdeps_support: 'yes'
           - os: 'ubuntu-24.04'
             operating_system: freebsd
             osvers: '14.4'
             architecture: 'x86-64'
-            is_bsd: true
-            has_sysdeps_support: 'yes'
           - os: 'ubuntu-24.04'
             operating_system: freebsd
             osvers: '13.5'
             architecture: 'x86-64'
-            is_bsd: true
-            has_sysdeps_support: 'yes'
           - os: 'ubuntu-24.04'
             operating_system: openbsd
             osvers: '7.9'
             architecture: 'x86-64'
-            is_bsd: true
-            has_sysdeps_support: 'yes'
           - os: 'ubuntu-24.04'
             operating_system: netbsd
             osvers: '10.1'
             architecture: 'x86-64'
-            is_bsd: true
-            has_sysdeps_support: 'no'
 
     steps:
     - name: Current workflow inputs
       run: echo "${{ toJSON(github.event.inputs) }}"
       shell: sh
-
-    # Run early because some actions may depend on installing packages
-    - name: "Fix sources.list for archived Debian releases"
-      if: "!matrix.is_bsd"
-      run: |
-        codename="$(grep VERSION_CODENAME /etc/os-release 2>/dev/null | cut -d= -f2 || true)"
-        if [ "$codename" = "buster" ] || [ "$codename" = "stretch" ]; then
-          cat > /etc/apt/sources.list <<EOF
-        deb http://archive.debian.org/debian $codename main contrib non-free
-        deb http://archive.debian.org/debian-security $codename/updates main contrib non-free
-        EOF
-          rm -f /etc/apt/sources.list.d/*
-          echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
-        fi
 
     - uses: actions/checkout@v3
       with:
@@ -156,42 +133,49 @@ jobs:
 
     - name: Start VM
       uses: cross-platform-actions/action@v1.2.0
-      if: matrix.is_bsd
+      if: matrix.operating_system
       with:
         operating_system: ${{ matrix.operating_system }}
         version: ${{ matrix.osvers }}
         architecture: ${{ matrix.architecture }}
-        environment_variables: CPANARG CPAN_REPORTER_CONFIG GITHUB_WORKSPACE INPUTS_MODULE INPUTS_GIT_URL
+        environment_variables: CPANARG CPAN_REPORTER_CONFIG GITHUB_WORKSPACE INPUTS_MODULE INPUTS_GIT_URL HAS_SYSDEPS_SUPPORT
         shell: bash
 
-    - name: "BSD: install basic system prereqs (perl...)"
-      if: matrix.is_bsd
+    # Run early because some actions may depend on installing packages
+    - name: "Fix sources.list for archived Debian releases"
       run: |
-          echo "::group::Install basic system prereqs (perl...)"
-          case "${{ matrix.operating_system }}" in
-            freebsd)
-              sudo pkg update
-              sudo pkg install -y perl5 git
-              ;;
-            openbsd)
-              # Update packages and install with pkg_add
-              sudo pkg_add -u
-              sudo pkg_add perl git
-              ;;
-            netbsd)
-              # Install using pkgin or pkg_add (depending on system setup)
-              if command -v pkgin >/dev/null 2>&1; then
-                sudo pkgin -y update
-                sudo pkgin -y install perl git
-              else
-                sudo pkg_add perl git
-              fi
-              ;;
-            *)
-              echo "Unsupported OS: ${{ matrix.operating_system }}"
-              exit 1
-              ;;
-          esac
+        codename="$(grep VERSION_CODENAME /etc/os-release 2>/dev/null | cut -d= -f2 || true)"
+        if [ "$codename" = "buster" ] || [ "$codename" = "stretch" ]; then
+          cat > /etc/apt/sources.list <<EOF
+        deb http://archive.debian.org/debian $codename main contrib non-free
+        deb http://archive.debian.org/debian-security $codename/updates main contrib non-free
+        EOF
+          rm -f /etc/apt/sources.list.d/*
+          echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+        fi
+
+    - name: "FreeBSD: install basic system prereqs (perl...)"
+      if: matrix.operating_system == 'freebsd'
+      run: |
+          sudo pkg update
+          sudo pkg install -y perl5 git
+
+    - name: "OpenBSD: install basic system prereqs (perl...)"
+      if: matrix.operating_system == 'openbsd'
+      run: |
+          sudo pkg_add -u
+          sudo pkg_add perl git
+
+    - name: "NetBSD: install basic system prereqs (perl...)"
+      if: matrix.operating_system == 'netbsd'
+      run: |
+          if command -v pkgin >/dev/null 2>&1; then
+            sudo pkgin -y update
+            sudo pkgin -y install perl git
+          else
+            sudo pkg_add perl git
+          fi
+          echo "HAS_SYSDEPS_SUPPORT=no" >> "$GITHUB_ENV"
 
     - name: "CentOS: install epel"
       run: |
@@ -230,7 +214,7 @@ jobs:
         sudocmd=$( [ "$(id -u)" -ne 0 ] && echo "sudo" || echo "" )
         $sudocmd apt-get update -yq && $sudocmd apt-get install -yqq perl git make gcc g++ $extra_pkgs
         echo "DEBIAN_FRONTEND=noninteractive" >> "$GITHUB_ENV"
-      if: "(startsWith(matrix.container, 'debian') || startsWith(matrix.container || matrix.os, 'ubuntu')) && !matrix.is_bsd"
+      if: "(startsWith(matrix.container, 'debian') || startsWith(matrix.container || matrix.os, 'ubuntu')) && !matrix.operating_system"
 
     - name: "apk-based systems: install perl, CPAN.pm, git..."
       run: |
@@ -245,7 +229,7 @@ jobs:
     - name: apt hacks
       # the already installed libgd3 conflicts with libgd-dev to be installed
       # also, /etc/apt/sources.list should be sufficient; all the other repositories are possibly problematic
-      if: "!matrix.is_bsd"
+      if: "!matrix.operating_system"
       run: |
         if [ -d /etc/apt/sources.list.d ]; then
           echo "Remove additional apt sources..."
@@ -265,16 +249,11 @@ jobs:
         sysdeps_opts=
         if [ ${{ inputs.include-sysdeps }} = 'true' ]
         then
-            if [ "${{ matrix.is_bsd }}" = "true" ]
+            if [ "$HAS_SYSDEPS_SUPPORT" = "yes" ]
             then
-                if [ "${{ matrix.has_sysdeps_support }}" = "yes" ]
-                then
-                    sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
-                else
-                    echo "Turning off sysdeps option. No support for operating system ${{ matrix.operating_system }}"
-                fi
-            else
                 sysdeps_opts='--enable-sysdeps --sysdeps-branch=${{ inputs.sysdeps-branch }}'
+            else
+                echo "Turning off sysdeps option. No support for operating system ${{ matrix.operating_system }}"
             fi
         fi
         cpan_reporter_opts=
@@ -288,19 +267,19 @@ jobs:
             debug_opts='--debug'
         fi
         reports_dir_opts=
-        if [ "${{ matrix.is_bsd }}" = "true" ]
+        if [ "${{ matrix.operating_system }}" != "" ]
         then
             reports_dir_opts="--reports-dir=$HOME/work/var/cpantesters/new"
         fi
         set -ex
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $reports_dir_opts $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
     - name: cpan-sysdeps check
-      if: "matrix.has_sysdeps_support == 'yes' || !matrix.is_bsd"
+      if: "env.HAS_SYSDEPS_SUPPORT != 'no'"
       continue-on-error: true
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }}
     - name: cpan-sysdeps dry-run commands
-      if: "matrix.has_sysdeps_support == 'yes' || !matrix.is_bsd"
+      if: "env.HAS_SYSDEPS_SUPPORT != 'no'"
       continue-on-error: true
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
@@ -323,7 +302,7 @@ jobs:
       run: |
         if [ -n "${{ matrix.container }}" ]; then
           NAME="${{ matrix.container }}"
-        elif [ "${{ matrix.is_bsd }}" = "true" ]; then
+        elif [ -n "${{ matrix.operating_system }}" ]; then
           NAME="${{ matrix.operating_system }}-${{ matrix.osvers }}-${{ matrix.architecture }}"
         else
           NAME="${{ matrix.os }}"
@@ -336,7 +315,7 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact-name.outputs.artifact_name }}
-        path: ${{ matrix.is_bsd && '~/work/var/cpantesters/new/*.rpt' || '~/var/cpantesters/new/*.rpt' }}
+        path: ${{ matrix.operating_system && '~/work/var/cpantesters/new/*.rpt' || '~/var/cpantesters/new/*.rpt' }}
 
   test-module-windows:
     name: on ${{ matrix.os }}
