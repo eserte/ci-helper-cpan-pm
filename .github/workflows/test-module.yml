@@ -43,11 +43,15 @@ jobs:
       HAS_SYSDEPS_SUPPORT: yes
     defaults:
       run:
+        # cpa.sh is cross-platform-actions/action "magic"
+        # otherwise prefer "sh" over "bash", as some operating systems come only with the former
         shell: ${{ matrix.operating_system && 'cpa.sh {0}' || 'sh' }}
     strategy:
       fail-fast: false
       matrix:
         include:
+          ######################################################################
+          # VM runners
           - os: 'macos-14'
             container: ~
           - os: 'macos-15'
@@ -55,13 +59,15 @@ jobs:
           ## XXX as of 2025-07-13: does not start at all
           #- os: 'macOS-15-arm64'
           #  container: ~
-          - os: 'ubuntu-latest'
-            container: ubuntu:20.04
           - os: 'ubuntu-22.04'
             container: ~
           - os: 'ubuntu-24.04'
             container: ~
-          # another ubuntu as a container, not runner
+          ######################################################################
+          # containers
+          # other ubuntus as containers, not runners
+          - os: 'ubuntu-latest'
+            container: ubuntu:20.04
           - os: 'ubuntu-latest'
             container: ubuntu:24.04
           - os: 'ubuntu-latest'
@@ -94,6 +100,8 @@ jobs:
             container: debian:forky
           - os: 'ubuntu-latest'
             container: alpine:3.23
+          ######################################################################
+          # operating systems handled by cross-platform-actions
           - os: 'ubuntu-24.04'
             operating_system: freebsd
             osvers: '15.0'
@@ -138,7 +146,7 @@ jobs:
         operating_system: ${{ matrix.operating_system }}
         version: ${{ matrix.osvers }}
         architecture: ${{ matrix.architecture }}
-        environment_variables: INPUTS_MODULE INPUTS_GIT_URL HAS_SYSDEPS_SUPPORT
+        environment_variables: CPANARG INPUTS_MODULE INPUTS_GIT_URL HAS_SYSDEPS_SUPPORT
         shell: bash
 
     # Run early because some actions may depend on installing packages
@@ -214,7 +222,7 @@ jobs:
         sudocmd=$( [ "$(id -u)" -ne 0 ] && echo "sudo" || echo "" )
         $sudocmd apt-get update -yq && $sudocmd apt-get install -yqq perl git make gcc g++ $extra_pkgs
         echo "DEBIAN_FRONTEND=noninteractive" >> "$GITHUB_ENV"
-      if: "(startsWith(matrix.container, 'debian') || startsWith(matrix.container || matrix.os, 'ubuntu')) && !matrix.operating_system"
+      if: "startsWith(matrix.container, 'debian') || startsWith(matrix.container || matrix.os, 'ubuntu')"
 
     - name: "apk-based systems: install perl, CPAN.pm, git..."
       run: |
@@ -265,11 +273,7 @@ jobs:
         then
             debug_opts='--debug'
         fi
-        reports_dir_opts=
-        if [ "${{ matrix.operating_system }}" != "" ]
-        then
-            reports_dir_opts="--reports-dir=$HOME/work/var/cpantesters/new"
-        fi
+        reports_dir_opts="--reports-dir=$HOME/work/var/cpantesters/new"
         set -ex
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $reports_dir_opts $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
     - name: cpan-sysdeps check
@@ -311,7 +315,7 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact-name.outputs.artifact_name }}
-        path: ${{ matrix.operating_system && '~/work/var/cpantesters/new/*.rpt' || '~/var/cpantesters/new/*.rpt' }}
+        path: '~/work/var/cpantesters/new/*.rpt'
 
   test-module-windows:
     name: on ${{ matrix.os }}
