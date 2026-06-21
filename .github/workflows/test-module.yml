@@ -229,7 +229,6 @@ jobs:
     - name: apt hacks
       # the already installed libgd3 conflicts with libgd-dev to be installed
       # also, /etc/apt/sources.list should be sufficient; all the other repositories are possibly problematic
-      if: "!matrix.operating_system"
       run: |
         if [ -d /etc/apt/sources.list.d ]; then
           echo "Remove additional apt sources..."
