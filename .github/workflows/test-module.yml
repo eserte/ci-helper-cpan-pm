@@ -266,13 +266,8 @@ jobs:
         then
             debug_opts='--debug'
         fi
-        reports_dir_opts=
-        if [ "${{ matrix.operating_system }}" != "" ]
-        then
-            reports_dir_opts="--reports-dir=$HOME/work/var/cpantesters/new"
-        fi
         set -ex
-        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $reports_dir_opts $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
+        $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
     - name: cpan-sysdeps check
       if: "env.HAS_SYSDEPS_SUPPORT != 'no'"
       continue-on-error: true
@@ -312,7 +307,7 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact-name.outputs.artifact_name }}
-        path: ${{ matrix.operating_system && '~/work/var/cpantesters/new/*.rpt' || '~/var/cpantesters/new/*.rpt' }}
+        path: ~/var/cpantesters/new/*.rpt
 
   test-module-windows:
     name: on ${{ matrix.os }}
