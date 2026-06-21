@@ -284,9 +284,6 @@ jobs:
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
     - name: maybe git clone repository
-      env:
-        INPUTS_MODULE: ${{ inputs.module }}
-        INPUTS_GIT_URL: ${{ inputs.git-url }}
       run: |
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-handle-inputs
     - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
@@ -320,6 +317,9 @@ jobs:
   test-module-windows:
     name: on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      INPUTS_MODULE: ${{ inputs.module }}
+      INPUTS_GIT_URL: ${{ inputs.git-url }}
     strategy:
       fail-fast: false
       matrix:
@@ -367,9 +367,6 @@ jobs:
       run: |
         cpan-sysdeps --cpanmod ${{ inputs.module }} --dry-run
     - name: maybe git clone repository
-      env:
-        INPUTS_MODULE: ${{ inputs.module }}
-        INPUTS_GIT_URL: ${{ inputs.git-url }}
       run: |
         perl "$env:GITHUB_WORKSPACE\ci-helper-cpan-pm\gh-handle-inputs"
     - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
