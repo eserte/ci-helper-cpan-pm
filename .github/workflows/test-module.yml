@@ -31,6 +31,10 @@ on:
       debug:
         type: boolean
         default: false
+      pre-install-modules:
+        type: string
+        required: false
+        description: "Space-separated list of Perl modules to install before the main module"
 
 jobs:
   test-module:
@@ -276,6 +280,12 @@ jobs:
         reports_dir_opts="--reports-dir=$HOME/work/var/cpantesters/new"
         set -ex
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $reports_dir_opts $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
+    - name: Pre-install modules
+      if: inputs.pre-install-modules != ''
+      env:
+        PRE_INSTALL_MODULES: ${{ inputs.pre-install-modules }}
+      run: |
+        cpan $PRE_INSTALL_MODULES
     - name: cpan-sysdeps check
       if: "env.HAS_SYSDEPS_SUPPORT != 'no'"
       continue-on-error: true
@@ -360,6 +370,15 @@ jobs:
     - name: prepend Strawberry Perl to PATH
       run: |
         echo "C:\Strawberry\c\bin;C:\Strawberry\perl\site\bin;C:\Strawberry\perl\bin;$env:PATH" > $env:GITHUB_PATH
+      shell: powershell
+    - name: Pre-install modules
+      if: inputs.pre-install-modules != ''
+      env:
+        PRE_INSTALL_MODULES: ${{ inputs.pre-install-modules }}
+      run: |
+        # Use -split to ensure word splitting in PowerShell
+        $mods = $env:PRE_INSTALL_MODULES -split ' ' | Where-Object { $_ -ne '' }
+        cpan @mods
       shell: powershell
     - name: cpan-sysdeps check
       continue-on-error: true
