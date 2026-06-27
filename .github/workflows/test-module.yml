@@ -31,6 +31,10 @@ on:
       debug:
         type: boolean
         default: false
+      pre-install-modules:
+        type: string
+        required: false
+        description: "Space-separated list of Perl modules to install before the main module"
 
 jobs:
   test-module:
@@ -40,6 +44,7 @@ jobs:
     env:
       INPUTS_MODULE: ${{ inputs.module }}
       INPUTS_GIT_URL: ${{ inputs.git-url }}
+      INPUTS_PRE_INSTALL_MODULES: ${{ inputs.pre-install-modules }}
       HAS_SYSDEPS_SUPPORT: yes
     defaults:
       run:
@@ -146,7 +151,7 @@ jobs:
         operating_system: ${{ matrix.operating_system }}
         version: ${{ matrix.osvers }}
         architecture: ${{ matrix.architecture }}
-        environment_variables: CPANARG INPUTS_MODULE INPUTS_GIT_URL HAS_SYSDEPS_SUPPORT
+        environment_variables: CPANARG INPUTS_MODULE INPUTS_GIT_URL INPUTS_PRE_INSTALL_MODULES HAS_SYSDEPS_SUPPORT
         shell: bash
 
     # Run early because some actions may depend on installing packages
@@ -276,6 +281,10 @@ jobs:
         reports_dir_opts="--reports-dir=$HOME/work/var/cpantesters/new"
         set -ex
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/ci-helper-cpan-pm --no-test $reports_dir_opts $distroprefs_opts $sysdeps_opts $cpan_reporter_opts $debug_opts
+    - name: Pre-install modules
+      if: inputs.pre-install-modules
+      run: |
+        cpan $INPUTS_PRE_INSTALL_MODULES
     - name: cpan-sysdeps check
       if: "env.HAS_SYSDEPS_SUPPORT != 'no'"
       continue-on-error: true
@@ -323,6 +332,7 @@ jobs:
     env:
       INPUTS_MODULE: ${{ inputs.module }}
       INPUTS_GIT_URL: ${{ inputs.git-url }}
+      INPUTS_PRE_INSTALL_MODULES: ${{ inputs.pre-install-modules }}
     strategy:
       fail-fast: false
       matrix:
@@ -361,6 +371,12 @@ jobs:
       run: |
         echo "C:\Strawberry\c\bin;C:\Strawberry\perl\site\bin;C:\Strawberry\perl\bin;$env:PATH" > $env:GITHUB_PATH
       shell: powershell
+    - name: Pre-install modules
+      if: inputs.pre-install-modules
+      run: |
+        $mods = $env:INPUTS_PRE_INSTALL_MODULES -split ' ' | Where-Object { $_ }
+        foreach ($m in $mods) { cpan $m }
+      shell: powershell
     - name: cpan-sysdeps check
       continue-on-error: true
       run: |
@@ -391,4 +407,3 @@ jobs:
       with:
         name: cpan-test-report-${{ matrix.os }}
         path: ${{ steps.artifact-path.outputs.userprofile }}\\var\\cpantesters\\new\\*.rpt
-
