@@ -35,6 +35,11 @@ on:
         type: string
         required: false
         description: "Space-separated list of Perl modules to install before the main module"
+      timeout-minutes:
+        type: number
+        required: false
+        default: 90
+        description: Job timeout in minutes
 
 jobs:
   test-module:
@@ -299,6 +304,7 @@ jobs:
       run: |
         $GITHUB_WORKSPACE/ci-helper-cpan-pm/gh-handle-inputs
     - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
+      timeout-minutes: ${{ fromJSON(inputs.timeout-minutes) }}
       run: |
         cpan ${{ inputs.test-only && '-t ' || '' }}$CPANARG
     - name: check ${{ inputs.module }}
@@ -389,6 +395,7 @@ jobs:
       run: |
         perl "$env:GITHUB_WORKSPACE\ci-helper-cpan-pm\gh-handle-inputs"
     - name: ${{ inputs.test-only && 'test' || 'install' }} ${{ inputs.module }}
+      timeout-minutes: ${{ fromJSON(inputs.timeout-minutes) }}
       run: |
         cpan ${{ inputs.test-only && '-t ' || '' }}$env:CPANARG
     - name: check ${{ inputs.module }}
