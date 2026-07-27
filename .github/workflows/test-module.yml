@@ -114,7 +114,7 @@ jobs:
           # operating systems handled by cross-platform-actions
           - os: 'ubuntu-24.04'
             operating_system: freebsd
-            osvers: '15.0'
+            osvers: '15.1'
             architecture: 'x86-64'
           - os: 'ubuntu-24.04'
             operating_system: freebsd
@@ -150,7 +150,7 @@ jobs:
       if: matrix.container != 'centos:7' && matrix.container != 'debian:stretch'
 
     - name: Start VM
-      uses: cross-platform-actions/action@v1.2.0
+      uses: cross-platform-actions/action@v1.3.0
       if: matrix.operating_system
       with:
         operating_system: ${{ matrix.operating_system }}
