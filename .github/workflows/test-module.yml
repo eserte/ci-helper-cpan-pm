@@ -130,7 +130,7 @@ jobs:
             architecture: 'x86-64'
           - os: 'ubuntu-24.04'
             operating_system: netbsd
-            osvers: '10.1'
+            osvers: '11.0'
             architecture: 'x86-64'
 
     steps:
@@ -150,7 +150,7 @@ jobs:
       if: matrix.container != 'centos:7' && matrix.container != 'debian:stretch'
 
     - name: Start VM
-      uses: cross-platform-actions/action@v1.3.0
+      uses: cross-platform-actions/action@v1.4.0
       if: matrix.operating_system
       with:
         operating_system: ${{ matrix.operating_system }}
