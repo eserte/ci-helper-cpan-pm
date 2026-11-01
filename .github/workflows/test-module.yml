@@ -121,10 +121,6 @@ jobs:
             osvers: '14.4'
             architecture: 'x86-64'
           - os: 'ubuntu-24.04'
-            operating_system: freebsd
-            osvers: '13.5'
-            architecture: 'x86-64'
-          - os: 'ubuntu-24.04'
             operating_system: openbsd
             osvers: '7.9'
             architecture: 'x86-64'
@@ -150,7 +146,7 @@ jobs:
       if: matrix.container != 'centos:7' && matrix.container != 'debian:stretch'
 
     - name: Start VM
-      uses: cross-platform-actions/action@v1.4.0
+      uses: cross-platform-actions/action@v1.7.0
       if: matrix.operating_system
       with:
         operating_system: ${{ matrix.operating_system }}
