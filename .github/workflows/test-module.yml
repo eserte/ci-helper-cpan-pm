@@ -159,7 +159,13 @@ jobs:
     - name: "Fix sources.list for archived Debian releases"
       run: |
         codename="$(grep VERSION_CODENAME /etc/os-release 2>/dev/null | cut -d= -f2 || true)"
-        if [ "$codename" = "buster" ] || [ "$codename" = "stretch" ]; then
+        if [ "$codename" = "bullseye" ]; then
+          cat > /etc/apt/sources.list <<EOF
+        deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/20260831/ bullseye main
+        deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-security/20260831/ bullseye-security main
+        EOF
+          rm -f /etc/apt/sources.list.d/*
+        elif [ "$codename" = "buster" ] || [ "$codename" = "stretch" ]; then
           cat > /etc/apt/sources.list <<EOF
         deb http://archive.debian.org/debian $codename main contrib non-free
         deb http://archive.debian.org/debian-security $codename/updates main contrib non-free
